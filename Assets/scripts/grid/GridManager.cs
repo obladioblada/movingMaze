@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 
@@ -5,21 +7,21 @@ namespace grid
 {
     public class GridManager : MonoBehaviour
     {
-        private static int rows = 4;
-        private static int columns = 4;
+        public const int ROWS = 7;
+        public const int COLUMNS = 7;
         [SerializeField] private GameObject tile;
-        GameObject[,] grid = new GameObject[rows, columns];
-        
+        [SerializeField] private GameObject allowMoving;
+        private List<Tile> _tiles;
+
         enum Axis
         {
             X,
             Y
         }
 
-
-        // Start is called before the first frame update
         void Awake()
         {
+            _tiles = new List<Tile>();
             GenerateGrid();
         }
 
@@ -40,47 +42,68 @@ namespace grid
             {
                 Shift(tile, 0, Axis.Y, Vector3.up);
             }
+
             if (Input.GetKeyDown("down"))
             {
                 Shift(tile, 0, Axis.Y, Vector3.down);
             }
         }
 
-        void GenerateGrid()
+        private void GenerateGrid()
         {
-            for (var x = 0; x < columns; x++)
+            for (var x = 0; x < COLUMNS; x++)
             {
-                for (var y = 0; y < rows; y++)
+                if (x % 2 == 1)
                 {
-                    GameObject newTile = Instantiate(tile, transform);
-                    newTile.AddComponent<Tile>();
-                    newTile.transform.position = new Vector2(x, y);
-                    newTile.name = y + "," + x;
-                    grid[y,x] = newTile;
+                    Instantiate(allowMoving, transform).transform
+                        .position = new Vector3(x, -1, 0);
+                    Instantiate(allowMoving, transform).transform
+                        .position = new Vector3(x, ROWS, 0);
+                }
+
+                for (var y = 0; y < ROWS; y++)
+                {
+                    if (y % 2 == 1 && (x == 0 || x == COLUMNS - 1))
+                    {
+                        Instantiate(allowMoving, transform).transform
+                            .position = new Vector3(-1, y, 0);
+                        Instantiate(allowMoving, transform).transform
+                            .position = new Vector3(COLUMNS, y, 0);
+                    }
+
+                    _tiles.Add(new Tile(x + y * 10, SpawnAndStore(x, y)));
                 }
             }
         }
 
-        void Shift(GameObject t, int index, Axis axis, Vector3 direction)
+        void Shift(GameObject ta, int index, Axis axis, Vector3 direction)
         {
-            if (Axis.X.Equals(axis)) ShiftOnX(index, direction);
-            if (Axis.Y.Equals(axis)) ShiftOnY(index, direction);
-        }
-        
-        private void ShiftOnX(int index, Vector3 direction)
-        {
-            for (var x = 0; x < columns; x++)
+            if (index % 2 != 1) return;
+            if (axis == Axis.X)
             {
-                grid[index, x].transform.position += direction;
+                foreach (var t in _tiles.Where(x => (int) x.gameObject.transform.position.y == index))
+                {
+                    t.Shift(direction);
+                }
+            } else
+            {
+                foreach (var t in _tiles.Where(x => (int) x.gameObject.transform.position.x == index))
+                {
+                    t.Shift(direction);
+                }
             }
         }
-        
-        private void ShiftOnY(int index, Vector3 direction)
+
+        private GameObject SpawnAndStore(int x, int y)
         {
-            for (var y = 0; y < rows; y++)
-            {
-                grid[y,index].transform.position += direction;
-            }
+            var go = Instantiate(
+                tile,
+                gameObject.transform.position,
+                Quaternion.Euler(0, 0, Random.Range(0, 4) * 90),
+                transform);
+            go.transform.position = new Vector3(x, y, 5);
+            go.name = y + "," + x;
+            return go;
         }
     }
 }
