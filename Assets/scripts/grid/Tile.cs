@@ -6,19 +6,17 @@ namespace grid
 {
     public class Tile
     {
-        public int _id;
-        public GameObject gameObject;
+        private readonly int _id;
+        public readonly GameObject gameObject;
+        public readonly GameObject treasure;
 
-        public Tile(int id, GameObject gameObject) {
-            _id = id;
-            this.gameObject = gameObject;
-        }
+        public Tile(int id, GameObject go, String tilePath) : this(id, go, tilePath, null) { }
 
-        public Tile(int id, GameObject go, String tilePath)
-        {
+        public Tile(int id, GameObject go, String tilePath, GameObject treasure) {
             _id = id;
             gameObject = go;
             gameObject.GetComponent<SpriteRenderer>().sprite = Resources.Load<Sprite>(tilePath);
+            this.treasure = treasure;
         }
 
 
@@ -33,10 +31,6 @@ namespace grid
         
         public bool IsAtColumn(int col) {
             return (int) gameObject.transform.position.x == col;
-        }
-
-        public Tile Clone() {
-            return new Tile(_id, gameObject);
         }
     }
 }

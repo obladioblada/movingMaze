@@ -1,19 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
 
 namespace grid {
     public class GridManager : MonoBehaviour {
-        private const int ROWS = 7;
-        private const int COLUMNS = 7;
+        public const int Rows = 7;
+        public const int Columns = 7;
         [SerializeField] private GameObject tile;
         [SerializeField] private GameObject allowMoving;
+        [SerializeField] private GameObject treasure;
         private List<Tile> _tiles;
         private Tile _spare;
-        
+
         private static string GetRandomTilePath() {
             return "Tiles/tile_" + Random.Range(1, 4);
         }
@@ -38,83 +40,93 @@ namespace grid {
             }
 
             if (Input.GetKeyDown("right")) {
-                Shift(1,ShiftAxis.Horizontally, Vector3.right);
+                Shift(1, ShiftAxis.Horizontally, Vector3.right);
             }
 
             if (Input.GetKeyDown("up")) {
-                Shift(1,ShiftAxis.Vertically, Vector3.up);
+                Shift(1, ShiftAxis.Vertically, Vector3.up);
             }
+
             if (Input.GetKeyDown("down")) {
                 Shift(1, ShiftAxis.Vertically, Vector3.down);
             }
+
             if (Input.GetKeyDown("r")) {
-               _spare.gameObject.transform.Rotate(0,0, 90);
+                _spare.gameObject.transform.Rotate(0, 0, 90);
             }
         }
 
-         void GenerateGrid() {
-            for (var x = 0; x < COLUMNS; x++) {
+        void GenerateGrid() {
+            for (var x = 0; x < Columns; x++) {
                 if (x % 2 == 1) {
                     Instantiate(allowMoving, transform).transform
                         .position = new Vector3(x, -1, 1);
                     Instantiate(allowMoving, transform).transform
-                        .position = new Vector3(x, ROWS, 1);
+                        .position = new Vector3(x, Rows, 1);
                 }
 
-                for (var y = 0; y < ROWS; y++) {
-                    GameObject go = SpawnTile(x, y);
+                for (var y = 0; y < Rows; y++) {
+                    var go = SpawnTile(x, y);
                     var tilePath = GetRandomTilePath();
-                    if ((x == 0 || x == COLUMNS - 1) && (y == 0 || y == ROWS - 1)) {
+                    if ((x == 0 || x == Columns - 1) && (y == 0 || y == Rows - 1)) {
                         tilePath = "Tiles/tile_3_blue";
+                        _tiles.Add(new Tile(x + y * 10, go, tilePath));
+                    }
+                    else if (Random.Range(1, 10) < 3) {
+                        var t = Instantiate(treasure, go.transform.position, go.transform.rotation, go.transform);
+                        t.GetComponent<Renderer>().material.color = Random.ColorHSV(0f, 1f, 1f, 1f, 0.5f, 1f);
+                        _tiles.Add(new Tile(x + y * 10, go, tilePath, t));
+                    }
+                    else {
+                        _tiles.Add(new Tile(x + y * 10, go, tilePath));
                     }
 
-                    if (y % 2 == 1 && (x == 0 || x == COLUMNS - 1)) {
+                    if (y % 2 == 1 && (x == 0 || x == Columns - 1)) {
                         Instantiate(allowMoving, transform).transform
                             .position = new Vector3(-1, y, 1);
                         Instantiate(allowMoving, transform).transform
-                            .position = new Vector3(COLUMNS, y, 1);
+                            .position = new Vector3(Columns, y, 1);
                     }
-
-                    _tiles.Add(new Tile(x + y * 10, go, tilePath));
                 }
             }
         }
-        
+
         private void Shift(int index, ShiftAxis axis, Vector3 direction) {
             if (index % 2 != 1) return;
             if (axis == ShiftAxis.Horizontally) {
                 if (direction == Vector3.right) {
-                    var leftOver = _tiles.First(t => t.gameObject.transform.position == new Vector3(COLUMNS - 1, index ));
-                    leftOver.gameObject.transform.position = _spare.gameObject.transform.position;
-                    _spare.gameObject.transform.position = new Vector2(-1, index);
-                    _spare = leftOver;
+                    var leftOver = _tiles.First(t => MatchPosition.LastInRow(t, index));
+                    Swap(leftOver, new Vector2(-1, index));
                 }
-                else if (direction  == Vector3.left){
-                    var leftOver = _tiles.Find(t => t.gameObject.transform.position == new Vector3(0, index));
-                    leftOver.gameObject.transform.position = _spare.gameObject.transform.position;
-                    _spare.gameObject.transform.position = new Vector2(COLUMNS, index);
-                    _spare = leftOver;
+                else {
+                    var leftOver = _tiles.First(t => MatchPosition.FirstInRow(t, index));
+                    Swap(leftOver, new Vector2(Columns, index));
                 }
+
                 foreach (var t in _tiles.Where(x => x.IsAtRow(index))) {
                     t.Shift(direction);
                 }
-            } else {
+            }
+            else {
                 if (direction == Vector3.up) {
-                    var leftOver = _tiles.Find(t => t.gameObject.transform.position == new Vector3(index, ROWS - 1));
-                    leftOver.gameObject.transform.position = _spare.gameObject.transform.position;
-                    _spare.gameObject.transform.position = new Vector2(index, -1);
-                    _spare = leftOver;
+                    var leftOver = _tiles.First(t => MatchPosition.LastInColumn(t, index));
+                    Swap(leftOver, new Vector2(index, -1));
                 }
-                else if (direction == Vector3.down) {
-                    var leftOver = _tiles.Find(t => t.gameObject.transform.position == new Vector3(index, 0));
-                    leftOver.gameObject.transform.position = _spare.gameObject.transform.position;
-                    _spare.gameObject.transform.position = new Vector2(index, ROWS);
+                else {
+                    var leftOver = _tiles.First(t => MatchPosition.FirstInColumn(t, index));
+                    Swap(leftOver, new Vector2(index, Rows));
                 }
 
                 foreach (var t in _tiles.Where(x => x.IsAtColumn(index))) {
                     t.Shift(direction);
                 }
             }
+        }
+
+        private void Swap(Tile newSpare, Vector2 oldSparePosition) {
+            newSpare.gameObject.transform.position = _spare.gameObject.transform.position;
+            _spare.gameObject.transform.position = oldSparePosition;
+            _spare = newSpare;
         }
 
         private GameObject SpawnTile(int x, int y) {
