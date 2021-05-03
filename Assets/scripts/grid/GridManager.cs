@@ -12,39 +12,43 @@ namespace grid {
         [SerializeField] private GameObject tile;
         [SerializeField] private GameObject allowMoving;
         private List<Tile> _tiles;
-        private Tile spare;
+        private Tile _spare;
+        
+        private static string GetRandomTilePath() {
+            return "Tiles/tile_" + Random.Range(1, 4);
+        }
 
-        private enum Axis {
-            X,
-            Y
+        private enum ShiftAxis {
+            Horizontally,
+            Vertically
         }
 
         void Awake() {
             _tiles = new List<Tile>();
             tile.transform.parent = transform;
-            spare = new Tile(-1, tile, GetRandomTilePath());
-            _tiles.Add(spare);
+            _spare = new Tile(-1, tile, GetRandomTilePath());
+            _tiles.Add(_spare);
             GenerateGrid();
         }
 
         // Update is called once per frame
         void Update() {
             if (Input.GetKeyDown("left")) {
-                Shift(1, Axis.X, Vector3.left);
+                Shift(1, ShiftAxis.Horizontally, Vector3.left);
             }
 
             if (Input.GetKeyDown("right")) {
-                Shift(1, Axis.X, Vector3.right);
+                Shift(1,ShiftAxis.Horizontally, Vector3.right);
             }
 
             if (Input.GetKeyDown("up")) {
-                Shift(1, Axis.Y, Vector3.up);
+                Shift(1,ShiftAxis.Vertically, Vector3.up);
             }
             if (Input.GetKeyDown("down")) {
-                Shift(1, Axis.Y, Vector3.down);
+                Shift(1, ShiftAxis.Vertically, Vector3.down);
             }
             if (Input.GetKeyDown("r")) {
-               spare.gameObject.transform.Rotate(0,0, 90);
+               _spare.gameObject.transform.Rotate(0,0, 90);
             }
         }
 
@@ -75,44 +79,39 @@ namespace grid {
                 }
             }
         }
-
-        private static string GetRandomTilePath() {
-            return "Tiles/tile_" + Random.Range(1, 4);
-        }
-
-        void Shift(int index, Axis axis, Vector3 direction) {
+        
+        private void Shift(int index, ShiftAxis axis, Vector3 direction) {
             if (index % 2 != 1) return;
-            if (axis == Axis.X) {
+            if (axis == ShiftAxis.Horizontally) {
                 if (direction == Vector3.right) {
                     var leftOver = _tiles.First(t => t.gameObject.transform.position == new Vector3(COLUMNS - 1, index ));
-                    leftOver.gameObject.transform.position = spare.gameObject.transform.position;
-                    spare.gameObject.transform.position = new Vector2(-1, index);
-                    spare = leftOver;
+                    leftOver.gameObject.transform.position = _spare.gameObject.transform.position;
+                    _spare.gameObject.transform.position = new Vector2(-1, index);
+                    _spare = leftOver;
                 }
                 else if (direction  == Vector3.left){
                     var leftOver = _tiles.Find(t => t.gameObject.transform.position == new Vector3(0, index));
-                    leftOver.gameObject.transform.position = spare.gameObject.transform.position;
-                    spare.gameObject.transform.position = new Vector2(COLUMNS, index);
-                    spare = leftOver;
+                    leftOver.gameObject.transform.position = _spare.gameObject.transform.position;
+                    _spare.gameObject.transform.position = new Vector2(COLUMNS, index);
+                    _spare = leftOver;
                 }
-
-                foreach (var t in _tiles.Where(x => (int) x.gameObject.transform.position.y == index)) {
+                foreach (var t in _tiles.Where(x => x.IsAtRow(index))) {
                     t.Shift(direction);
                 }
             } else {
                 if (direction == Vector3.up) {
                     var leftOver = _tiles.Find(t => t.gameObject.transform.position == new Vector3(index, ROWS - 1));
-                    leftOver.gameObject.transform.position = spare.gameObject.transform.position;
-                    spare.gameObject.transform.position = new Vector2(index, -1);
-                    spare = leftOver;
+                    leftOver.gameObject.transform.position = _spare.gameObject.transform.position;
+                    _spare.gameObject.transform.position = new Vector2(index, -1);
+                    _spare = leftOver;
                 }
                 else if (direction == Vector3.down) {
                     var leftOver = _tiles.Find(t => t.gameObject.transform.position == new Vector3(index, 0));
-                    leftOver.gameObject.transform.position = spare.gameObject.transform.position;
-                    spare.gameObject.transform.position = new Vector2(index, ROWS);
+                    leftOver.gameObject.transform.position = _spare.gameObject.transform.position;
+                    _spare.gameObject.transform.position = new Vector2(index, ROWS);
                 }
 
-                foreach (var t in _tiles.Where(x => (int) x.gameObject.transform.position.x == index)) {
+                foreach (var t in _tiles.Where(x => x.IsAtColumn(index))) {
                     t.Shift(direction);
                 }
             }

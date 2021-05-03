@@ -27,6 +27,14 @@ namespace grid
             gameObject.transform.position += direction;
         }
 
+        public bool IsAtRow(int row) {
+            return (int) gameObject.transform.position.y == row;
+        }
+        
+        public bool IsAtColumn(int col) {
+            return (int) gameObject.transform.position.x == col;
+        }
+
         public Tile Clone() {
             return new Tile(_id, gameObject);
         }
