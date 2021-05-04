@@ -1,0 +1,36 @@
+<html>
+<head>
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+    <script type="text/javascript" src="https://www.airconsole.com/api/airconsole-1.7.0.js"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script type="text/javascript">
+        var airconsole;
+
+        function App() {
+            airconsole = new AirConsole({"orientation": AirConsole.ORIENTATION_LANDSCAPE});
+            App.prototype.sendMessage = function () {
+                console.log("sending message");
+            }
+        }
+    </script>
+
+</head>
+<body onload="window.app = new App()">
+<div id="player" class="player">
+    <div class="container">
+        <div class="item btn-left">
+            <div class="arrow left"></div>
+        </div>
+        <div class="item card">
+            CARD
+        </div>
+        <div class="item select">
+            <h1>SELECT</h1>
+        </div>
+        <div class="item btn-right">
+            <div class="arrow right"></div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

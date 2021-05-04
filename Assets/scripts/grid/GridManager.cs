@@ -94,32 +94,17 @@ namespace grid {
         private void Shift(int index, ShiftAxis axis, Vector3 direction) {
             if (index % 2 != 1) return;
             if (axis == ShiftAxis.Horizontally) {
-                if (direction == Vector3.right) {
-                    var leftOver = _tiles.First(t => MatchPosition.LastInRow(t, index));
-                    Swap(leftOver, new Vector2(-1, index));
-                }
-                else {
-                    var leftOver = _tiles.First(t => MatchPosition.FirstInRow(t, index));
-                    Swap(leftOver, new Vector2(Columns, index));
-                }
-
-                foreach (var t in _tiles.Where(x => x.IsAtRow(index))) {
-                    t.Shift(direction);
-                }
+                var leftOver = _tiles.First(t =>
+                    direction == Vector3.right ? MatchPosition.LastInRow(t, index) : MatchPosition.FirstInRow(t, index));
+                Swap(leftOver, direction == Vector3.right ? MatchPosition.BeforeFirstInRow(index) : MatchPosition.AfterLastInRow(index));
             }
             else {
-                if (direction == Vector3.up) {
-                    var leftOver = _tiles.First(t => MatchPosition.LastInColumn(t, index));
-                    Swap(leftOver, new Vector2(index, -1));
-                }
-                else {
-                    var leftOver = _tiles.First(t => MatchPosition.FirstInColumn(t, index));
-                    Swap(leftOver, new Vector2(index, Rows));
-                }
-
-                foreach (var t in _tiles.Where(x => x.IsAtColumn(index))) {
-                    t.Shift(direction);
-                }
+                var leftOver = _tiles.First(t =>
+                    direction == Vector3.up ? MatchPosition.LastInColumn(t, index) : MatchPosition.FirstInColumn(t, index));
+                Swap(leftOver, direction == Vector3.up ? MatchPosition.BeforeFirstInColumn(index) : MatchPosition.AfterLastInColumn(index));
+            }
+            foreach (var t in _tiles.Where(x => axis == ShiftAxis.Horizontally ? x.IsAtRow(index):x.IsAtColumn(index) )) {
+                t.Shift(direction);
             }
         }
 
