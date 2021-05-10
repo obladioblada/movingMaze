@@ -13,11 +13,10 @@ namespace grid {
         [SerializeField] private GameObject treasure;
         private List<Tile> _tiles;
         private List<Arrow> _arrows;
-        private int _selectedArrow;
+        private Arrow _lastSelectedArrow;
+        private int _selectedArrowIndex;
         private Tile _spare;
-        private Vector3 _lastDirection;
-        private int _lastIndex;
-
+        private bool _isFirstTurn;
         private static string GetRandomTilePath() {
             return "Tiles/tile_" + Random.Range(1, 4);
         }
@@ -29,77 +28,74 @@ namespace grid {
 
         void Awake() {
             _tiles = new List<Tile>();
-            //create Y arrays
             _arrows = new List<Arrow>();
             tile.transform.parent = transform;
             _spare = new Tile(-1, tile, GetRandomTilePath());
             _tiles.Add(_spare);
             GenerateGrid();
-            _selectedArrow = 0;
-            _lastIndex = 0;
-            _lastDirection = _arrows[_selectedArrow].direction; 
-            _arrows[_selectedArrow].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
+            _selectedArrowIndex = 0;
+            _lastSelectedArrow = _arrows[_selectedArrowIndex];
+            _lastSelectedArrow.gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
+            _isFirstTurn = true;
         }
 
-        // Update is called once per frame
         void Update() {
             if (Input.GetKeyDown("left")) {
-                SelectRowOrColumn(_selectedArrow - 1);
+                SelectRowOrColumn(_selectedArrowIndex - 1);
             }
 
             if (Input.GetKeyDown("right")) {
-                SelectRowOrColumn(_selectedArrow + 1);
-                //Shift(1, ShiftAxis.Horizontally, Vector3.right);
-                Debug.Log(_selectedArrow);
+                SelectRowOrColumn(_selectedArrowIndex + 1);
             }
 
-            if (Input.GetKeyDown("up")) {
-            }
+            if (Input.GetKeyDown("up")) { }
 
-            if (Input.GetKeyDown("down")) {
-            }
+            if (Input.GetKeyDown("down")) { }
 
             if (Input.GetKeyDown("r")) {
                 _spare.gameObject.transform.Rotate(0, 0, 90);
             }
+
             if (Input.GetKeyDown("s")) {
                 // start gamr an
                 Debug.Log("should start game..");
                 GameController.StartGame();
             }
+
             if (Input.GetKeyDown("i")) {
                 // insert tile and shift row/column
-                var newindex = (int) (_arrows[_selectedArrow].axes == ShiftAxis.Horizontally
-                    ? _arrows[_selectedArrow].gameObject.transform.position.y
-                    : _arrows[_selectedArrow].gameObject.transform.position.x);
-
-                Debug.Log("_lastIndex" + _lastIndex);
-                Debug.Log("Last direction " + _lastDirection);
-                Debug.Log("_newIndex" + newindex);
-                Debug.Log("new direction " + -_arrows[_selectedArrow].direction);
-                if (newindex == _lastIndex && _lastDirection == -_arrows[_selectedArrow].direction) {
-                    Debug.Log("Can't this because it would revert last change");
+                var selectedArrow = _arrows[_selectedArrowIndex];
+                if (IsOppositeSide(_lastSelectedArrow, selectedArrow) && !_isFirstTurn) {
+                    Debug.Log("Can't do this because it would revert last change");
+                    _arrows[_selectedArrowIndex].gameObject.GetComponent<SpriteRenderer>().color = Color.red;
                 } else {
-                    Shift(newindex, _arrows[_selectedArrow].axes, _arrows[_selectedArrow].direction);
+                    _isFirstTurn = false;
+                    _lastSelectedArrow = _arrows[_selectedArrowIndex];
+                    Shift(_lastSelectedArrow.index, _lastSelectedArrow.axes, _lastSelectedArrow.direction);
                 }
-                
             }
         }
 
-        private void SelectRowOrColumn(int index) {
-            Debug.Log(index);
-            _arrows[_selectedArrow].gameObject.GetComponent<SpriteRenderer>().color = Color.gray;
-            _selectedArrow = index;
-            if (_selectedArrow < 0) _selectedArrow = _arrows.Count - 1;
-            if (_selectedArrow > _arrows.Count - 1) _selectedArrow = 0;
-            _arrows[_selectedArrow].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
+        private static bool IsOppositeSide(Arrow last, Arrow selected) {
+            return selected.index == last.index && last.direction == -selected.direction;
+        }
+
+        // move   
+        private void SelectRowOrColumn(int arrowIndex) {
+            _arrows[_selectedArrowIndex].gameObject.GetComponent<SpriteRenderer>().color = Color.gray;
+            _selectedArrowIndex = arrowIndex;
+            if (_selectedArrowIndex < 0) _selectedArrowIndex = _arrows.Count - 1;
+            if (_selectedArrowIndex > _arrows.Count - 1) _selectedArrowIndex = 0;
+            _arrows[_selectedArrowIndex].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
         }
 
         void GenerateGrid() {
             for (var x = 0; x < X; x++) {
                 if (x % 2 == 1) {
-                    _arrows.Add(new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Vertically, new Vector3(x, -1, 1), Vector3.up));
-                    _arrows.Add(new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Vertically, new Vector3(x, Y, 1),  Vector3.down));
+                    _arrows.Add(new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Vertically,
+                        new Vector3(x, -1, 1), Vector3.up, x));
+                    _arrows.Add(new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Vertically, 
+                        new Vector3(x, Y, 1), Vector3.down, x));
                 }
 
                 for (var y = 0; y < Y; y++) {
@@ -120,14 +116,15 @@ namespace grid {
 
                     if (y % 2 == 1 && x == 0) {
                         Debug.Log("Arrow:" + x + ":" + y);
-                        _arrows.Add(new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Horizontally, new Vector3(-1, y, 1),Vector3.right ));
-                        _arrows.Add(new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Horizontally,  new Vector3(X, y, 1),Vector3.left ));
+                        _arrows.Add(new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Horizontally,
+                            new Vector3(-1, y, 1), Vector3.right, y));
+                        _arrows.Add(new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Horizontally,
+                            new Vector3(X, y, 1), Vector3.left, y));
                     }
                 }
             }
-            Debug.Log(_arrows.Count);
         }
-        
+
         private void Shift(int index, ShiftAxis axis, Vector3 direction) {
             if (index % 2 != 1) return;
             if (axis == ShiftAxis.Horizontally) {
@@ -140,7 +137,8 @@ namespace grid {
                     direction == Vector3.up ? MatchPosition.LastInColumn(t, index) : MatchPosition.FirstInColumn(t, index));
                 Swap(leftOver, direction == Vector3.up ? MatchPosition.BeforeFirstInColumn(index) : MatchPosition.AfterLastInColumn(index));
             }
-            foreach (var t in _tiles.Where(x => axis == ShiftAxis.Horizontally ? x.IsAtRow(index):x.IsAtColumn(index) )) {
+
+            foreach (var t in _tiles.Where(x => axis == ShiftAxis.Horizontally ? x.IsAtRow(index) : x.IsAtColumn(index))) {
                 t.Shift(direction);
             }
         }
