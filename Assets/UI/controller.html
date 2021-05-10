@@ -1,34 +1,38 @@
-<html>
+<html lang="en">
 <head>
     <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
     <script type="text/javascript" src="https://www.airconsole.com/api/airconsole-1.7.0.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
     <link rel="stylesheet" type="text/css" href="style.css">
-    <script type="text/javascript">
-        var airconsole;
-
-        function App() {
-            airconsole = new AirConsole({"orientation": AirConsole.ORIENTATION_LANDSCAPE});
-            App.prototype.sendMessage = function () {
-                console.log("sending message");
-            }
-        }
-    </script>
-
+    <script type="text/javascript" src="visual-controller.js"></script>
 </head>
-<body onload="window.app = new App()">
-<div id="player" class="player">
-    <div class="container">
-        <div class="item btn-left">
-            <div class="arrow left"></div>
+<body>
+<div id="wrapper" class="wrapper">
+    <div class="directions-wrapper shadow inactive">
+        <div id="up" class="button button-up shadow">
+            <i class="icon" data-feather="chevron-up"></i>
         </div>
-        <div class="item card">
-            CARD
+        <div id="right" class="button button-right shadow">
+            <i class="icon" data-feather="chevron-right"></i>
         </div>
-        <div class="item select">
-            <h1>SELECT</h1>
+        <div id="down" class="button button-down shadow">
+            <i class="icon" data-feather="chevron-down"></i>
         </div>
-        <div class="item btn-right">
-            <div class="arrow right"></div>
+        <div id="left" class="button button-left shadow">
+            <i class="icon" data-feather="chevron-left"></i>
+        </div>
+    </div>
+
+    <div class="target-wrapper">
+        <image id="target" class="target-image shadow inactive" src="https://picsum.photos/150/150.jpg"></image>
+    </div>
+
+    <div class="actions-wrapper">
+        <div id="rotate" class="button button-rotate shadow" ontouchstart="rotate()">>
+            <i class="icon" data-feather="rotate-ccw"></i>
+        </div>
+        <div id="done" class="button button-confirm shadow">
+            <i class="icon" data-feather="check"></i>
         </div>
     </div>
 </div>
