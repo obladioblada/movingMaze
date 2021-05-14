@@ -12,7 +12,6 @@ namespace grid {
         [SerializeField] private GameObject treasure;
         private List<Tile> _tiles;
         private Arrow[] _arrows;
-        private Arrow _currentSelectedArrow;
         private int _selectedArrowIndex;
         private int _oppositeSelectedArrowIndex;
         private Tile _spare;
@@ -35,40 +34,39 @@ namespace grid {
             GenerateGrid();
             _selectedArrowIndex = 0;
             _oppositeSelectedArrowIndex = 1;
-            _currentSelectedArrow = _arrows[_selectedArrowIndex];
-            _currentSelectedArrow.gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
+            _arrows[_selectedArrowIndex].SetColor(Color.yellow);
             _isFirstTurn = true;
         }
 
         void Update() {
             if (Input.GetKeyDown("left")) {
-                if (_currentSelectedArrow.direction.Equals(Vector3.right)) return;
+                if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.right)) return;
                 if (_selectedArrowIndex == N) {
                     SelectRowOrColumn(N - 3);
                 } else if (_selectedArrowIndex == N - 1) {
                     SelectRowOrColumn(0);
-                } else if (_currentSelectedArrow.axes.Equals(ShiftAxis.Vertically)) SelectRowOrColumn(_selectedArrowIndex - 2);
-                else if (_currentSelectedArrow.axes.Equals(ShiftAxis.Horizontally)) SelectRowOrColumn(_selectedArrowIndex - 1);
+                } else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Vertically)) SelectRowOrColumn(_selectedArrowIndex - 2);
+                else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Horizontally)) SelectRowOrColumn(_selectedArrowIndex - 1);
             }
 
             if (Input.GetKeyDown("right")) {
-                if (_currentSelectedArrow.direction.Equals(Vector3.left)) return;
+                if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.left)) return;
                 // 4 -> 7
                 if (_selectedArrowIndex ==  2 * N - 3)   SelectRowOrColumn(N - 2);
                 else if (_selectedArrowIndex ==  2 * N - 4) SelectRowOrColumn(1);
-                else if (_currentSelectedArrow.axes.Equals(ShiftAxis.Vertically)) SelectRowOrColumn(_selectedArrowIndex + 2);
-                else if (_currentSelectedArrow.axes.Equals(ShiftAxis.Horizontally)) SelectRowOrColumn(_selectedArrowIndex + 1);
+                else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Vertically)) SelectRowOrColumn(_selectedArrowIndex + 2);
+                else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Horizontally)) SelectRowOrColumn(_selectedArrowIndex + 1);
             }
 
             if (Input.GetKeyDown("up")) {
                 //do nothing if already at the top
-                if (_currentSelectedArrow.direction.Equals(Vector3.down)) return;
+                if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.down)) return;
                 // 4 -> 7
                 if (_selectedArrowIndex == N - 3) {
                     SelectRowOrColumn(N);
                 } else if (_selectedArrowIndex == N - 2) {
                     SelectRowOrColumn(2 * N - 3);
-                } else if (_currentSelectedArrow.direction.Equals(Vector3.up)) {
+                } else if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.up)) {
                     //move vertically up =
                     SelectRowOrColumn(_selectedArrowIndex + 1);
                 } //move vertically up ||
@@ -76,7 +74,7 @@ namespace grid {
             }
             if (Input.GetKeyDown("down")) {
                 //do nothing if already at the bottom
-                if (_currentSelectedArrow.direction == Vector3.up) return;
+                if ( _arrows[_selectedArrowIndex].direction == Vector3.up) return;
                 // 0-> 6
                 if (_selectedArrowIndex == 0) {
                     SelectRowOrColumn(N - 1);
@@ -85,7 +83,7 @@ namespace grid {
                 else if (_selectedArrowIndex == 1) {
                     SelectRowOrColumn(2 * N - 4);
                 }
-                else if (_currentSelectedArrow.direction == Vector3.down) {
+                else if ( _arrows[_selectedArrowIndex].direction == Vector3.down) {
                     //move vertically down =
                     SelectRowOrColumn(_selectedArrowIndex - 1);
                 } //move vertically down ||
@@ -106,27 +104,26 @@ namespace grid {
             if (Input.GetKeyDown("i")) {
                 if (_oppositeSelectedArrowIndex == _selectedArrowIndex && !_isFirstTurn) {
                     Debug.Log("Can't do this because it would revert last change");
-                    _arrows[_selectedArrowIndex].gameObject.GetComponent<SpriteRenderer>().color = Color.red;
-                }
-                else {
+                    _arrows[_selectedArrowIndex].SetColor(Color.red);
+                } else {
                     _isFirstTurn = false;
                     // get the opposite arrow index before assigning new one to prevent reverting last action
                     _oppositeSelectedArrowIndex = _selectedArrowIndex % 2 == 0 ? _selectedArrowIndex + 1 : _selectedArrowIndex - 1;
-                    Shift(_currentSelectedArrow.index, _currentSelectedArrow.axes, _currentSelectedArrow.direction);
+                    Shift( _arrows[_selectedArrowIndex].index,  _arrows[_selectedArrowIndex].axes,  _arrows[_selectedArrowIndex].direction);
                 }
             }
         }
         
-        // swap color and    
+        // swap color and   
         private void SelectRowOrColumn(int arrowIndex) {
             _arrows[_selectedArrowIndex].SetColor(Color.gray);
             _selectedArrowIndex = arrowIndex;
-            _currentSelectedArrow = _arrows[_selectedArrowIndex];
-            _currentSelectedArrow.SetColor(Color.yellow);
+            _arrows[_selectedArrowIndex].SetColor(Color.yellow);
         }
 
         void GenerateGrid() {
             for (var x = 0; x < N; x++) {
+                // creating arrows bottom/top
                 if (x % 2 == 1) {
                     _arrows[N + x - 2] = new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Vertically,
                         new Vector3(x, -1, 1), Vector3.up, x);
@@ -149,7 +146,7 @@ namespace grid {
                     else {
                         _tiles.Add(new Tile(x + y * 10, go, tilePath));
                     }
-
+                    // creating arrows right/left
                     if (y % 2 == 1 && x == 0) {
                         _arrows[y - 1] = (new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Horizontally,
                             new Vector3(-1, y, 1), Vector3.right, y));
