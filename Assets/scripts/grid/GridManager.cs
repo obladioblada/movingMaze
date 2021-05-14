@@ -13,8 +13,9 @@ namespace grid {
         private List<Tile> _tiles;
         private List<Arrow> _arrows;
         private Dictionary<int, Arrow[]> arrowsMap; 
-        private Arrow _lastSelectedArrow;
+        private Arrow _currentSelectedArrow;
         private int _selectedArrowIndex;
+        private int _oppositeSelectedArrowIndex;
         private Tile _spare;
         private bool _isFirstTurn;
         private static string GetRandomTilePath() {
@@ -34,40 +35,41 @@ namespace grid {
             _tiles.Add(_spare);
             GenerateGrid();
             _selectedArrowIndex = 0;
-            _lastSelectedArrow = _arrows[_selectedArrowIndex];
-            _lastSelectedArrow.gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
+            _oppositeSelectedArrowIndex = 1;
+            _currentSelectedArrow = _arrows[_selectedArrowIndex];
+            _currentSelectedArrow.gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
             _isFirstTurn = true;
         }
 
         void Update() {
             if (Input.GetKeyDown("left")) {
-                if (_lastSelectedArrow.direction.Equals(Vector3.right)) return;
+                if (_currentSelectedArrow.direction.Equals(Vector3.right)) return;
                 if (_selectedArrowIndex == N) {
                     SelectRowOrColumn(N - 3);
                 } else if (_selectedArrowIndex == N - 1) {
                     SelectRowOrColumn(0);
-                } else if (_lastSelectedArrow.axes.Equals(ShiftAxis.Vertically)) SelectRowOrColumn(_selectedArrowIndex - 2);
-                else if (_lastSelectedArrow.axes.Equals(ShiftAxis.Horizontally)) SelectRowOrColumn(_selectedArrowIndex - 1);
+                } else if (_currentSelectedArrow.axes.Equals(ShiftAxis.Vertically)) SelectRowOrColumn(_selectedArrowIndex - 2);
+                else if (_currentSelectedArrow.axes.Equals(ShiftAxis.Horizontally)) SelectRowOrColumn(_selectedArrowIndex - 1);
             }
 
             if (Input.GetKeyDown("right")) {
-                if (_lastSelectedArrow.direction.Equals(Vector3.left)) return;
+                if (_currentSelectedArrow.direction.Equals(Vector3.left)) return;
                 // 4 -> 7
                 if (_selectedArrowIndex ==  2 * N - 3)   SelectRowOrColumn(N - 2);
                 else if (_selectedArrowIndex ==  2 * N - 4) SelectRowOrColumn(1);
-                else if (_lastSelectedArrow.axes.Equals(ShiftAxis.Vertically)) SelectRowOrColumn(_selectedArrowIndex + 2);
-                else if (_lastSelectedArrow.axes.Equals(ShiftAxis.Horizontally)) SelectRowOrColumn(_selectedArrowIndex + 1);
+                else if (_currentSelectedArrow.axes.Equals(ShiftAxis.Vertically)) SelectRowOrColumn(_selectedArrowIndex + 2);
+                else if (_currentSelectedArrow.axes.Equals(ShiftAxis.Horizontally)) SelectRowOrColumn(_selectedArrowIndex + 1);
             }
 
             if (Input.GetKeyDown("up")) {
                 //do nothing if already at the top
-                if (_lastSelectedArrow.direction.Equals(Vector3.down)) return;
+                if (_currentSelectedArrow.direction.Equals(Vector3.down)) return;
                 // 4 -> 7
                 if (_selectedArrowIndex == N - 3) {
                     SelectRowOrColumn(N);
                 } else if (_selectedArrowIndex == N - 2) {
                     SelectRowOrColumn(2 * N - 3);
-                } else if (_lastSelectedArrow.direction.Equals(Vector3.up)) {
+                } else if (_currentSelectedArrow.direction.Equals(Vector3.up)) {
                     //move vertically up =
                     SelectRowOrColumn(_selectedArrowIndex + 1);
                 } //move vertically up ||
@@ -75,7 +77,7 @@ namespace grid {
             }
             if (Input.GetKeyDown("down")) {
                 //do nothing if already at the bottom
-                if (_lastSelectedArrow.direction == Vector3.up) return;
+                if (_currentSelectedArrow.direction == Vector3.up) return;
                 // 0-> 6
                 if (_selectedArrowIndex == 0) {
                     SelectRowOrColumn(N - 1);
@@ -84,7 +86,7 @@ namespace grid {
                 else if (_selectedArrowIndex == 1) {
                     SelectRowOrColumn(2 * N - 4);
                 }
-                else if (_lastSelectedArrow.direction == Vector3.down) {
+                else if (_currentSelectedArrow.direction == Vector3.down) {
                     //move vertically down =
                     SelectRowOrColumn(_selectedArrowIndex - 1);
                 } //move vertically down ||
@@ -103,30 +105,25 @@ namespace grid {
 
             // insert tile and shift row/column
             if (Input.GetKeyDown("i")) {
-              
-                var selectedArrow = _arrows[_selectedArrowIndex];
-                if (IsOppositeSide(_lastSelectedArrow, selectedArrow) && !_isFirstTurn) {
+                if (_oppositeSelectedArrowIndex == _selectedArrowIndex && !_isFirstTurn) {
                     Debug.Log("Can't do this because it would revert last change");
                     _arrows[_selectedArrowIndex].gameObject.GetComponent<SpriteRenderer>().color = Color.red;
-                } else {
+                }
+                else {
                     _isFirstTurn = false;
-                    _lastSelectedArrow = _arrows[_selectedArrowIndex];
-                    Shift(_lastSelectedArrow.index, _lastSelectedArrow.axes, _lastSelectedArrow.direction);
+                    // get the opposite arrow index before assigning new one to prevent reverting last action
+                    _oppositeSelectedArrowIndex = _selectedArrowIndex % 2 == 0 ? _selectedArrowIndex + 1 : _selectedArrowIndex - 1;
+                    Shift(_currentSelectedArrow.index, _currentSelectedArrow.axes, _currentSelectedArrow.direction);
                 }
             }
         }
-
-        private static bool IsOppositeSide(Arrow last, Arrow selected) {
-            return selected.index == last.index && last.direction == -selected.direction;
-        }
-
+        
         // move   
         private void SelectRowOrColumn(int arrowIndex) {
-            Debug.Log(arrowIndex);
             _arrows[_selectedArrowIndex].gameObject.GetComponent<SpriteRenderer>().color = Color.gray;
             _selectedArrowIndex = arrowIndex;
-            _lastSelectedArrow = _arrows[_selectedArrowIndex];
-            _lastSelectedArrow.gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
+            _currentSelectedArrow = _arrows[_selectedArrowIndex];
+            _currentSelectedArrow.gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
         }
 
         void GenerateGrid() {
