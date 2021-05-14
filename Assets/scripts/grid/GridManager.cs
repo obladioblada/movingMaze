@@ -6,13 +6,13 @@ using Random = UnityEngine.Random;
 
 namespace grid {
     public class GridManager : MonoBehaviour {
-        public const int Y = 7;
-        public const int X = 7;
+        public const int N = 9;
         [SerializeField] private GameObject tile;
         [SerializeField] private GameObject allowMoving;
         [SerializeField] private GameObject treasure;
         private List<Tile> _tiles;
         private List<Arrow> _arrows;
+        private Dictionary<int, Arrow[]> arrowsMap; 
         private Arrow _lastSelectedArrow;
         private int _selectedArrowIndex;
         private Tile _spare;
@@ -41,29 +41,69 @@ namespace grid {
 
         void Update() {
             if (Input.GetKeyDown("left")) {
-                SelectRowOrColumn(_selectedArrowIndex - 1);
+                if (_lastSelectedArrow.direction.Equals(Vector3.right)) return;
+                if (_selectedArrowIndex == N) {
+                    SelectRowOrColumn(N - 3);
+                } else if (_selectedArrowIndex == N - 1) {
+                    SelectRowOrColumn(0);
+                } else if (_lastSelectedArrow.axes.Equals(ShiftAxis.Vertically)) SelectRowOrColumn(_selectedArrowIndex - 2);
+                else if (_lastSelectedArrow.axes.Equals(ShiftAxis.Horizontally)) SelectRowOrColumn(_selectedArrowIndex - 1);
             }
 
             if (Input.GetKeyDown("right")) {
-                SelectRowOrColumn(_selectedArrowIndex + 1);
+                if (_lastSelectedArrow.direction.Equals(Vector3.left)) return;
+                // 4 -> 7
+                if (_selectedArrowIndex ==  2 * N - 3)   SelectRowOrColumn(N - 2);
+                else if (_selectedArrowIndex ==  2 * N - 4) SelectRowOrColumn(1);
+                else if (_lastSelectedArrow.axes.Equals(ShiftAxis.Vertically)) SelectRowOrColumn(_selectedArrowIndex + 2);
+                else if (_lastSelectedArrow.axes.Equals(ShiftAxis.Horizontally)) SelectRowOrColumn(_selectedArrowIndex + 1);
             }
 
-            if (Input.GetKeyDown("up")) { }
-
-            if (Input.GetKeyDown("down")) { }
+            if (Input.GetKeyDown("up")) {
+                //do nothing if already at the top
+                if (_lastSelectedArrow.direction.Equals(Vector3.down)) return;
+                // 4 -> 7
+                if (_selectedArrowIndex == N - 3) {
+                    SelectRowOrColumn(N);
+                } else if (_selectedArrowIndex == N - 2) {
+                    SelectRowOrColumn(2 * N - 3);
+                } else if (_lastSelectedArrow.direction.Equals(Vector3.up)) {
+                    //move vertically up =
+                    SelectRowOrColumn(_selectedArrowIndex + 1);
+                } //move vertically up ||
+                else SelectRowOrColumn(_selectedArrowIndex + 2);
+            }
+            if (Input.GetKeyDown("down")) {
+                //do nothing if already at the bottom
+                if (_lastSelectedArrow.direction == Vector3.up) return;
+                // 0-> 6
+                if (_selectedArrowIndex == 0) {
+                    SelectRowOrColumn(N - 1);
+                }
+                // 1 -> 10
+                else if (_selectedArrowIndex == 1) {
+                    SelectRowOrColumn(2 * N - 4);
+                }
+                else if (_lastSelectedArrow.direction == Vector3.down) {
+                    //move vertically down =
+                    SelectRowOrColumn(_selectedArrowIndex - 1);
+                } //move vertically down ||
+                else SelectRowOrColumn(_selectedArrowIndex - 2);
+            }
 
             if (Input.GetKeyDown("r")) {
                 _spare.gameObject.transform.Rotate(0, 0, 90);
             }
 
+            // start game
             if (Input.GetKeyDown("s")) {
-                // start gamr an
                 Debug.Log("should start game..");
                 GameController.StartGame();
             }
 
+            // insert tile and shift row/column
             if (Input.GetKeyDown("i")) {
-                // insert tile and shift row/column
+              
                 var selectedArrow = _arrows[_selectedArrowIndex];
                 if (IsOppositeSide(_lastSelectedArrow, selectedArrow) && !_isFirstTurn) {
                     Debug.Log("Can't do this because it would revert last change");
@@ -82,26 +122,26 @@ namespace grid {
 
         // move   
         private void SelectRowOrColumn(int arrowIndex) {
+            Debug.Log(arrowIndex);
             _arrows[_selectedArrowIndex].gameObject.GetComponent<SpriteRenderer>().color = Color.gray;
             _selectedArrowIndex = arrowIndex;
-            if (_selectedArrowIndex < 0) _selectedArrowIndex = _arrows.Count - 1;
-            if (_selectedArrowIndex > _arrows.Count - 1) _selectedArrowIndex = 0;
-            _arrows[_selectedArrowIndex].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
+            _lastSelectedArrow = _arrows[_selectedArrowIndex];
+            _lastSelectedArrow.gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
         }
 
         void GenerateGrid() {
-            for (var x = 0; x < X; x++) {
+            for (var x = 0; x < N; x++) {
                 if (x % 2 == 1) {
-                    _arrows.Add(new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Vertically,
+                    _arrows.Add( new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Vertically,
                         new Vector3(x, -1, 1), Vector3.up, x));
-                    _arrows.Add(new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Vertically, 
-                        new Vector3(x, Y, 1), Vector3.down, x));
+                    _arrows.Add(new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Vertically,
+                        new Vector3(x, N, 1), Vector3.down, x));
                 }
 
-                for (var y = 0; y < Y; y++) {
+                for (var y = 0; y < N; y++) {
                     var go = SpawnTile(x, y);
                     var tilePath = GetRandomTilePath();
-                    if ((x == 0 || x == X - 1) && (y == 0 || y == Y - 1)) {
+                    if ((x == 0 || x == N - 1) && (y == 0 || y == N - 1)) {
                         tilePath = "Tiles/tile_3_blue";
                         _tiles.Add(new Tile(x + y * 10, go, tilePath));
                     }
@@ -115,11 +155,10 @@ namespace grid {
                     }
 
                     if (y % 2 == 1 && x == 0) {
-                        Debug.Log("Arrow:" + x + ":" + y);
                         _arrows.Add(new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Horizontally,
                             new Vector3(-1, y, 1), Vector3.right, y));
                         _arrows.Add(new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Horizontally,
-                            new Vector3(X, y, 1), Vector3.left, y));
+                            new Vector3(N, y, 1), Vector3.left, y));
                     }
                 }
             }
