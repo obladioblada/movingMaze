@@ -4,21 +4,21 @@
     <script type="text/javascript" src="https://www.airconsole.com/api/airconsole-1.7.0.js"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <link rel="stylesheet" type="text/css" href="style.css">
-    <script type="text/javascript" src="visual-controller.js"></script>
+    <script type="text/javascript" src="app-controller.js"></script>
 </head>
-<body>
+<body onload="window.app = new App()">
 <div id="wrapper" class="wrapper">
     <div class="directions-wrapper shadow inactive">
-        <div id="up" class="button button-up shadow">
+        <div id="up" class="button button-up shadow" ontouchstart="window.app.sendEvent(INPUT_UP)">
             <i class="icon" data-feather="chevron-up"></i>
         </div>
-        <div id="right" class="button button-right shadow">
+        <div id="right" class="button button-right shadow" ontouchstart="window.app.sendEvent(INPUT_RIGHT)">
             <i class="icon" data-feather="chevron-right"></i>
         </div>
-        <div id="down" class="button button-down shadow">
+        <div id="down" class="button button-down shadow" ontouchstart="window.app.sendEvent(INPUT_DOWN)">
             <i class="icon" data-feather="chevron-down"></i>
         </div>
-        <div id="left" class="button button-left shadow">
+        <div id="left" class="button button-left shadow" ontouchstart="window.app.sendEvent(INPUT_LEFT)">
             <i class="icon" data-feather="chevron-left"></i>
         </div>
     </div>
@@ -28,10 +28,10 @@
     </div>
 
     <div class="actions-wrapper">
-        <div id="rotate" class="button button-rotate shadow" ontouchstart="rotate()">>
+        <div id="rotate" class="button button-rotate shadow" ontouchstart="window.app.sendEvent(INPUT_ROTATE)">
             <i class="icon" data-feather="rotate-ccw"></i>
         </div>
-        <div id="done" class="button button-confirm shadow">
+        <div id="insert" class="button button-confirm shadow" ontouchstart="window.app.sendEvent(INPUT_INSERT)">
             <i class="icon" data-feather="check"></i>
         </div>
     </div>

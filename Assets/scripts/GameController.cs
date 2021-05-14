@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using grid;
 using UnityEngine;
 using NDream.AirConsole;
 using Newtonsoft.Json.Linq;
@@ -48,8 +49,29 @@ public class GameController : MonoBehaviour {
     void OnMessage(int from, JToken data)
     {   
         Debug.Log("message from " + from + " data: " + data);
-        AirConsole.instance.Message(from,new {});
-        
+        var action = (int) data["action"];
+        Debug.Log((int)InputController.INPUT_LEFT);
+        Debug.Log(action);
+        switch (action) {
+            case (int) InputController.INPUT_LEFT:
+                GridManager.MoveArrowLeft();
+                break;
+            case (int) InputController.INPUT_RIGHT:
+                GridManager.MoveArrowRight();
+                break;
+            case (int) InputController.INPUT_UP:
+                GridManager.MoveArrowUp();
+                break;
+            case (int) InputController.INPUT_DOWN:
+                GridManager.MoveArrowDown();
+                break;
+            case (int) InputController.INPUT_ROTATE:
+                GridManager.RotateSpareTile();
+                break;
+            case (int) InputController.INPUT_INSERT:
+                GridManager.InsertTile();
+                break;
+        }
     }
     private void OnDestroy()
     {
