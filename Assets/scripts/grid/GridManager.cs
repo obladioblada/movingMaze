@@ -6,13 +6,12 @@ using Random = UnityEngine.Random;
 
 namespace grid {
     public class GridManager : MonoBehaviour {
-        public const int N = 9;
+        public const int N = 7;
         [SerializeField] private GameObject tile;
         [SerializeField] private GameObject allowMoving;
         [SerializeField] private GameObject treasure;
         private List<Tile> _tiles;
-        private List<Arrow> _arrows;
-        private Dictionary<int, Arrow[]> arrowsMap; 
+        private Arrow[] _arrows;
         private Arrow _currentSelectedArrow;
         private int _selectedArrowIndex;
         private int _oppositeSelectedArrowIndex;
@@ -29,7 +28,7 @@ namespace grid {
 
         void Awake() {
             _tiles = new List<Tile>();
-            _arrows = new List<Arrow>();
+            _arrows = new Arrow[N / 2 * 4];
             tile.transform.parent = transform;
             _spare = new Tile(-1, tile, GetRandomTilePath());
             _tiles.Add(_spare);
@@ -118,21 +117,21 @@ namespace grid {
             }
         }
         
-        // move   
+        // swap color and    
         private void SelectRowOrColumn(int arrowIndex) {
-            _arrows[_selectedArrowIndex].gameObject.GetComponent<SpriteRenderer>().color = Color.gray;
+            _arrows[_selectedArrowIndex].SetColor(Color.gray);
             _selectedArrowIndex = arrowIndex;
             _currentSelectedArrow = _arrows[_selectedArrowIndex];
-            _currentSelectedArrow.gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
+            _currentSelectedArrow.SetColor(Color.yellow);
         }
 
         void GenerateGrid() {
             for (var x = 0; x < N; x++) {
                 if (x % 2 == 1) {
-                    _arrows.Add( new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Vertically,
-                        new Vector3(x, -1, 1), Vector3.up, x));
-                    _arrows.Add(new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Vertically,
-                        new Vector3(x, N, 1), Vector3.down, x));
+                    _arrows[N + x - 2] = new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Vertically,
+                        new Vector3(x, -1, 1), Vector3.up, x);
+                    _arrows[N + x - 1] = new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Vertically,
+                        new Vector3(x, N, 1), Vector3.down, x);
                 }
 
                 for (var y = 0; y < N; y++) {
@@ -152,13 +151,16 @@ namespace grid {
                     }
 
                     if (y % 2 == 1 && x == 0) {
-                        _arrows.Add(new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Horizontally,
+                        _arrows[y - 1] = (new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Horizontally,
                             new Vector3(-1, y, 1), Vector3.right, y));
-                        _arrows.Add(new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Horizontally,
+                        _arrows[y] = (new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Horizontally,
                             new Vector3(N, y, 1), Vector3.left, y));
                     }
                 }
             }
+            
+            Destroy(allowMoving);
+            Destroy(treasure);
         }
 
         private void Shift(int index, ShiftAxis axis, Vector3 direction) {
