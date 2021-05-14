@@ -14,6 +14,7 @@ public class GameController : MonoBehaviour {
     
     // Use Dictionary as a map.
     static Dictionary<int, string> color = new Dictionary<int, string>();
+    private int activePlayer;
 
 
 
@@ -35,7 +36,7 @@ public class GameController : MonoBehaviour {
         AirConsole.instance.onConnect += OnConnect;
         AirConsole.instance.onDisconnect += OnDisconnect;
     }
-    
+
     void OnDisconnect(int deviceID) {
         Debug.Log("Device " + deviceID + " disconnected");
     }
@@ -47,12 +48,9 @@ public class GameController : MonoBehaviour {
     void OnMessage(int from, JToken data)
     {   
         Debug.Log("message from " + from + " data: " + data);
-        AirConsole.instance.Message(from,new {
-            active = false
-        });
+        AirConsole.instance.Message(from,new {});
         
     }
-
     private void OnDestroy()
     {
         if (AirConsole.instance != null) AirConsole.instance.onMessage -= OnMessage;
@@ -84,7 +82,5 @@ public class GameController : MonoBehaviour {
                 device_id = AirConsole.instance.ConvertPlayerNumberToDeviceId(index)
             });
         }
-
-       
     }
 }

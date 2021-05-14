@@ -4,6 +4,19 @@ using UnityEngine;
 namespace grid {
     public static class MatchPosition {
         
+        public const int ARROW_WS = 0;
+        public const int ARROW_ES = 1;
+        public const int ARROW_NW = GridManager.N;
+        public const int ARROW_SW = GridManager.N - 1;
+        public const int ARROW_EN = GridManager.N - 2;
+        public const int ARROW_WN = GridManager.N - 3;
+        public const int ARROW_NE = 2 * GridManager.N - 3;
+        public const int ARROW_SE = 2 * GridManager.N - 4;
+        public const int ShiftUpOrRight = 2;
+        public const int ShiftDownOrLeft = -2;
+        public const int shiftOppositeRightOrUp = 1;
+        public const int shiftOppositeLeftOrDown = -1;
+
         public static readonly Func<Tile, int, bool> LastInRow = (t, index) =>
             t.gameObject.transform.position == new Vector3(GridManager.N - 1, index);
 

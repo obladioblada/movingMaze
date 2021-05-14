@@ -10,12 +10,12 @@ namespace grid {
         [SerializeField] private GameObject tile;
         [SerializeField] private GameObject allowMoving;
         [SerializeField] private GameObject treasure;
-        private List<Tile> _tiles;
-        private Arrow[] _arrows;
-        private int _selectedArrowIndex;
-        private int _oppositeSelectedArrowIndex;
-        private Tile _spare;
-        private bool _isFirstTurn;
+        private static List<Tile> _tiles;
+        private static Arrow[] _arrows;
+        private static int _selectedArrowIndex;
+        private static int _oppositeSelectedArrowIndex;
+        private static Tile _spare;
+        private static bool _isFirstTurn;
         private static string GetRandomTilePath() {
             return "Tiles/tile_" + Random.Range(1, 4);
         }
@@ -25,7 +25,7 @@ namespace grid {
             Vertically
         }
 
-        void Awake() {
+        private void Awake() {
             _tiles = new List<Tile>();
             _arrows = new Arrow[N / 2 * 4];
             tile.transform.parent = transform;
@@ -37,91 +37,68 @@ namespace grid {
             _arrows[_selectedArrowIndex].SetColor(Color.yellow);
             _isFirstTurn = true;
         }
+        public static void InsertTile() {
+            if (_oppositeSelectedArrowIndex == _selectedArrowIndex && !_isFirstTurn) {
+                Debug.Log("Can't do this because it would revert last change");
+                _arrows[_selectedArrowIndex].SetColor(Color.red);
+            } else {
+                _isFirstTurn = false;
+                // get the opposite arrow index before assigning new one to prevent reverting last action
+                _oppositeSelectedArrowIndex = _selectedArrowIndex % 2 == 0 ? _selectedArrowIndex + 1 : _selectedArrowIndex - 1;
+                ShiftTiles( _arrows[_selectedArrowIndex].index,  _arrows[_selectedArrowIndex].axes,  _arrows[_selectedArrowIndex].direction);
+            }
+        }
 
-        void Update() {
-            if (Input.GetKeyDown("left")) {
-                if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.right)) return;
-                if (_selectedArrowIndex == N) {
-                    SelectRowOrColumn(N - 3);
-                } else if (_selectedArrowIndex == N - 1) {
-                    SelectRowOrColumn(0);
-                } else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Vertically)) SelectRowOrColumn(_selectedArrowIndex - 2);
-                else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Horizontally)) SelectRowOrColumn(_selectedArrowIndex - 1);
-            }
+        public static void MoveArrowRight() {
+            if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.left)) return;
+            if (_selectedArrowIndex ==  MatchPosition.ARROW_NE)   GetArrowAtIndex(MatchPosition.ARROW_EN);
+            else if (_selectedArrowIndex == MatchPosition.ARROW_SE) GetArrowAtIndex(MatchPosition.ARROW_ES);
+            else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Vertically)) ShiftArrow(MatchPosition.ShiftUpOrRight);
+            else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Horizontally)) ShiftArrow(MatchPosition.shiftOppositeRightOrUp);
+        }
 
-            if (Input.GetKeyDown("right")) {
-                if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.left)) return;
-                // 4 -> 7
-                if (_selectedArrowIndex ==  2 * N - 3)   SelectRowOrColumn(N - 2);
-                else if (_selectedArrowIndex ==  2 * N - 4) SelectRowOrColumn(1);
-                else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Vertically)) SelectRowOrColumn(_selectedArrowIndex + 2);
-                else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Horizontally)) SelectRowOrColumn(_selectedArrowIndex + 1);
-            }
+        public static void MoveArrowLeft() {
+            if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.right)) return;
+            if (_selectedArrowIndex == MatchPosition.ARROW_NW) GetArrowAtIndex(MatchPosition.ARROW_WN);
+            else if (_selectedArrowIndex == MatchPosition.ARROW_SW) GetArrowAtIndex(MatchPosition.ARROW_WS);
+            else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Vertically)) ShiftArrow(MatchPosition.ShiftDownOrLeft);
+            else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Horizontally)) ShiftArrow(MatchPosition.shiftOppositeLeftOrDown);
+        }
+        
+        public static void MoveArrowUp() {
+            if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.down)) return;
+            if (_selectedArrowIndex == MatchPosition.ARROW_WN) GetArrowAtIndex(MatchPosition.ARROW_NW);
+            else if (_selectedArrowIndex == MatchPosition.ARROW_EN) GetArrowAtIndex(MatchPosition.ARROW_NE);
+            else if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.up)) ShiftArrow(MatchPosition.shiftOppositeRightOrUp);
+            else ShiftArrow(MatchPosition.ShiftUpOrRight);
+        }
+        
+        public static void MoveArrowDown() {
+            if ( _arrows[_selectedArrowIndex].direction == Vector3.up) return;
+            if (_selectedArrowIndex == MatchPosition.ARROW_WS) GetArrowAtIndex(MatchPosition.ARROW_SW);
+            else if (_selectedArrowIndex == MatchPosition.ARROW_ES) GetArrowAtIndex(MatchPosition.ARROW_SE);
+            else if ( _arrows[_selectedArrowIndex].direction == Vector3.down) ShiftArrow(MatchPosition.shiftOppositeLeftOrDown);
+            else ShiftArrow(MatchPosition.ShiftDownOrLeft);
+        }
+        
+        
+        private static void ShiftArrow(int offset) {
+            GetArrowAtIndex(_selectedArrowIndex + offset);
+        }
 
-            if (Input.GetKeyDown("up")) {
-                //do nothing if already at the top
-                if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.down)) return;
-                // 4 -> 7
-                if (_selectedArrowIndex == N - 3) {
-                    SelectRowOrColumn(N);
-                } else if (_selectedArrowIndex == N - 2) {
-                    SelectRowOrColumn(2 * N - 3);
-                } else if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.up)) {
-                    //move vertically up =
-                    SelectRowOrColumn(_selectedArrowIndex + 1);
-                } //move vertically up ||
-                else SelectRowOrColumn(_selectedArrowIndex + 2);
-            }
-            if (Input.GetKeyDown("down")) {
-                //do nothing if already at the bottom
-                if ( _arrows[_selectedArrowIndex].direction == Vector3.up) return;
-                // 0-> 6
-                if (_selectedArrowIndex == 0) {
-                    SelectRowOrColumn(N - 1);
-                }
-                // 1 -> 10
-                else if (_selectedArrowIndex == 1) {
-                    SelectRowOrColumn(2 * N - 4);
-                }
-                else if ( _arrows[_selectedArrowIndex].direction == Vector3.down) {
-                    //move vertically down =
-                    SelectRowOrColumn(_selectedArrowIndex - 1);
-                } //move vertically down ||
-                else SelectRowOrColumn(_selectedArrowIndex - 2);
-            }
-
-            if (Input.GetKeyDown("r")) {
-                _spare.gameObject.transform.Rotate(0, 0, 90);
-            }
-
-            // start game
-            if (Input.GetKeyDown("s")) {
-                Debug.Log("should start game..");
-                GameController.StartGame();
-            }
-
-            // insert tile and shift row/column
-            if (Input.GetKeyDown("i")) {
-                if (_oppositeSelectedArrowIndex == _selectedArrowIndex && !_isFirstTurn) {
-                    Debug.Log("Can't do this because it would revert last change");
-                    _arrows[_selectedArrowIndex].SetColor(Color.red);
-                } else {
-                    _isFirstTurn = false;
-                    // get the opposite arrow index before assigning new one to prevent reverting last action
-                    _oppositeSelectedArrowIndex = _selectedArrowIndex % 2 == 0 ? _selectedArrowIndex + 1 : _selectedArrowIndex - 1;
-                    Shift( _arrows[_selectedArrowIndex].index,  _arrows[_selectedArrowIndex].axes,  _arrows[_selectedArrowIndex].direction);
-                }
-            }
+        public static void RotateSpareTile() {
+            Debug.Log("rotating");
+            _spare.gameObject.transform.Rotate(0, 0, 90);
         }
         
         // swap color and   
-        private void SelectRowOrColumn(int arrowIndex) {
+        private static void GetArrowAtIndex(int arrowIndex) {
             _arrows[_selectedArrowIndex].SetColor(Color.gray);
             _selectedArrowIndex = arrowIndex;
             _arrows[_selectedArrowIndex].SetColor(Color.yellow);
         }
 
-        void GenerateGrid() {
+        private void GenerateGrid() {
             for (var x = 0; x < N; x++) {
                 // creating arrows bottom/top
                 if (x % 2 == 1) {
@@ -160,17 +137,17 @@ namespace grid {
             Destroy(treasure);
         }
 
-        private void Shift(int index, ShiftAxis axis, Vector3 direction) {
+        private static void ShiftTiles(int index, ShiftAxis axis, Vector3 direction) {
             if (index % 2 != 1) return;
             if (axis == ShiftAxis.Horizontally) {
                 var leftOver = _tiles.First(t =>
                     direction == Vector3.right ? MatchPosition.LastInRow(t, index) : MatchPosition.FirstInRow(t, index));
-                Swap(leftOver, direction == Vector3.right ? MatchPosition.BeforeFirstInRow(index) : MatchPosition.AfterLastInRow(index));
+                SwapTiles(leftOver, direction == Vector3.right ? MatchPosition.BeforeFirstInRow(index) : MatchPosition.AfterLastInRow(index));
             }
             else {
                 var leftOver = _tiles.First(t =>
                     direction == Vector3.up ? MatchPosition.LastInColumn(t, index) : MatchPosition.FirstInColumn(t, index));
-                Swap(leftOver, direction == Vector3.up ? MatchPosition.BeforeFirstInColumn(index) : MatchPosition.AfterLastInColumn(index));
+                SwapTiles(leftOver, direction == Vector3.up ? MatchPosition.BeforeFirstInColumn(index) : MatchPosition.AfterLastInColumn(index));
             }
 
             foreach (var t in _tiles.Where(x => axis == ShiftAxis.Horizontally ? x.IsAtRow(index) : x.IsAtColumn(index))) {
@@ -178,7 +155,7 @@ namespace grid {
             }
         }
 
-        private void Swap(Tile newSpare, Vector2 oldSparePosition) {
+        private static void SwapTiles(Tile newSpare, Vector2 oldSparePosition) {
             newSpare.gameObject.transform.position = _spare.gameObject.transform.position;
             _spare.gameObject.transform.position = oldSparePosition;
             _spare = newSpare;
