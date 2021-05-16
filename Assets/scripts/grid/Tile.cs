@@ -10,9 +10,7 @@ namespace grid
         public readonly GameObject gameObject;
         public readonly GameObject treasure;
 
-        public Tile(int id, GameObject go, String tilePath) : this(id, go, tilePath, null) { }
-
-        public Tile(int id, GameObject go, String tilePath, GameObject treasure) {
+        public Tile(int id, GameObject go, String tilePath, GameObject treasure = null) {
             _id = id;
             gameObject = go;
             gameObject.GetComponent<SpriteRenderer>().sprite = Resources.Load<Sprite>(tilePath);

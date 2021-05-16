@@ -8,13 +8,14 @@ using Newtonsoft.Json.Linq;
 using Random = UnityEngine.Random;
 
 public class GameController : MonoBehaviour {
+    
     private const string RED = "#D32F2F";
     private const string YELLOW = "#F4D03F";
     private const string GREEN = "#4CAF50";
     private const string BLUE = "#3498DB";
     
     // Use Dictionary as a map.
-    static Dictionary<int, string> color = new Dictionary<int, string>();
+    static readonly Dictionary<int, string> color = new Dictionary<int, string>();
     private int activePlayer;
 
 
@@ -88,6 +89,7 @@ public class GameController : MonoBehaviour {
             throw;
         }
       
+        Debug.Log(AirConsole.instance.GetActivePlayerDeviceIds);
         Debug.Log("first player " + AirConsole.instance.ConvertPlayerNumberToDeviceId(0));
         AirConsole.instance.Message(AirConsole.instance.ConvertPlayerNumberToDeviceId(0),new {
             action = "UPDATE_STATE",

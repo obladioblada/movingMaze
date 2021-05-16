@@ -24,7 +24,7 @@ function App() {
     me.airConsole.onConnect = function(deviceId) {
         me.airConsole.message(AirConsole.SCREEN, {
             device_id: deviceId,
-            user_name: airConsole.getNickname(deviceId)
+            user_name: me.airConsole.getNickname(deviceId)
         });
     };
 

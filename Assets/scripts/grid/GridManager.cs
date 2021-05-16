@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -16,7 +17,10 @@ namespace grid {
         private static int _oppositeSelectedArrowIndex;
         private static Tile _spare;
         private static bool _isFirstTurn;
-        private static string GetRandomTilePath() {
+        
+        // returns the specified tile or a random one otherwise
+        private static string GetTilePathWithNumber([CanBeNull] string tileNumber) {
+            if (tileNumber != null ) return  "Tiles/tile_" + tileNumber;
             return "Tiles/tile_" + Random.Range(1, 4);
         }
 
@@ -29,7 +33,7 @@ namespace grid {
             _tiles = new List<Tile>();
             _arrows = new Arrow[N / 2 * 4];
             tile.transform.parent = transform;
-            _spare = new Tile(-1, tile, GetRandomTilePath());
+            _spare = new Tile(-1, tile, GetTilePathWithNumber(null));
             _tiles.Add(_spare);
             GenerateGrid();
             _selectedArrowIndex = 0;
@@ -100,30 +104,41 @@ namespace grid {
 
         private void GenerateGrid() {
             for (var x = 0; x < N; x++) {
-                // creating arrows bottom/top
+                // creating arrows bottom/top side
                 if (x % 2 == 1) {
                     _arrows[N + x - 2] = new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Vertically,
                         new Vector3(x, -1, 1), Vector3.up, x);
                     _arrows[N + x - 1] = new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Vertically,
                         new Vector3(x, N, 1), Vector3.down, x);
                 }
-
                 for (var y = 0; y < N; y++) {
                     var go = SpawnTile(x, y);
-                    var tilePath = GetRandomTilePath();
+                    string tilePath;
                     if ((x == 0 || x == N - 1) && (y == 0 || y == N - 1)) {
-                        tilePath = "Tiles/tile_3_blue";
+                        tilePath = GetTilePathWithNumber("3");
+                        go.transform.rotation = new Quaternion(0, 0, 0, 0);
+                        switch (x) {
+                            case 0 when y == N - 1:
+                                go.transform.Rotate(0, 0, -90);
+                                break;
+                            case N - 1 when y == 0:
+                                go.transform.Rotate(0, 0, 90);
+                                break;
+                            case N - 1 when y == N - 1:
+                                go.transform.Rotate(0, 0, 180);
+                                break;
+                        }
                         _tiles.Add(new Tile(x + y * 10, go, tilePath));
-                    }
-                    else if (Random.Range(1, 10) < 3) {
-                        var t = Instantiate(treasure, go.transform.position, go.transform.rotation, go.transform);
-                        t.GetComponent<Renderer>().material.color = Random.ColorHSV(0f, 1f, 1f, 1f, 0.5f, 1f);
+                    } else {
+                        tilePath =  GetTilePathWithNumber(null);
+                        GameObject t = null;
+                        if (Random.Range(1, 10) < 3) {
+                            t = Instantiate(treasure, go.transform.position, go.transform.rotation, go.transform);
+                            t.GetComponent<Renderer>().material.color = Random.ColorHSV(0f, 1f, 1f, 1f, 0.5f, 1f);
+                        }
                         _tiles.Add(new Tile(x + y * 10, go, tilePath, t));
                     }
-                    else {
-                        _tiles.Add(new Tile(x + y * 10, go, tilePath));
-                    }
-                    // creating arrows right/left
+                    // creating arrows right/left side
                     if (y % 2 == 1 && x == 0) {
                         _arrows[y - 1] = (new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Horizontally,
                             new Vector3(-1, y, 1), Vector3.right, y));
@@ -136,7 +151,7 @@ namespace grid {
             Destroy(allowMoving);
             Destroy(treasure);
         }
-
+        
         private static void ShiftTiles(int index, ShiftAxis axis, Vector3 direction) {
             if (index % 2 != 1) return;
             if (axis == ShiftAxis.Horizontally) {

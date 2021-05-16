@@ -76,7 +76,7 @@ body{
     overflow: hidden;
     height: calc(100vh - 4em);
     max-height: calc(360px - 4em);
-    margin: 2em;
+    margin: 2em 2em 2em 0.5em;
 }
 
 .directions-wrapper > .button{
