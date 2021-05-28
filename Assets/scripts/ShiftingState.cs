@@ -14,7 +14,16 @@ public class ShiftingState : AbstractState
         if (Input.GetKeyDown(InputController.INPUT_RIGHT)) {GridManager.MoveArrowRight();}
         if (Input.GetKeyDown(InputController.INPUT_UP)) {GridManager.MoveArrowUp();}
         if (Input.GetKeyDown(InputController.INPUT_DOWN)) {GridManager.MoveArrowDown();}
-        if (Input.GetKeyDown(InputController.INPUT_ROTATE)) {GridManager.RotateSpareTile();
+        if (Input.GetKeyDown(InputController.INPUT_ROTATE)) {GridManager.RotateSpareTile();};
+        if (Input.GetKeyDown(InputController.INPUT_INSERT)) {
+            GridManager.InsertTile();
+            StateMachine.ChangeState(GameController._states[State.STATE_MOVE]);
         };
     }
+    
+     public override void Exit() {
+         var message = GameController.updatePlayerMessage(GameController.activePlayer, true);
+         GameController.sendMessageToPlayer(message, GameController.activePlayer);
+         GridManager._tiles[0].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
+     }
 }

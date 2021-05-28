@@ -48,18 +48,10 @@ function App() {
     }
 
     me.airConsole.onMessage = function(from, data) {
-        console.log("onMessage", from, data);
         if (data["action"] === "UPDATE_STATE") {
-            console.log("updating state", from, data);
-            if (data["state"] === "move") {
-                toogleButton("rotate");
-            } else if (data["state"] === "shift") {
-                toogleButton("rotate");
-            } else {
-                if(data["color"])  setBackground(data["color"])
-                if(data["active"]) setActive(data["active"])
-            }
-            
+            console.log("onMessage", from, data);
+            setActive(data["active"])
+            if (data["color"]) setBackground(data["color"])
         }
     };
     
@@ -81,13 +73,14 @@ const setTargetImage = (url) => {
 }
 
 const setActive = (isActive) => {
+    console.log("setting element axctive = " + isActive)
     console.log(isActive)
-    console.log(isActive == true)
     if(isActive){
         document.getElementById("wrapper").classList.remove('inactive');
     } else {
         document.getElementById("wrapper").classList.add('inactive');
     }
+    console.log(document.getElementById("wrapper").classList);
 }
 
 const toogleButton = (id) =>  {

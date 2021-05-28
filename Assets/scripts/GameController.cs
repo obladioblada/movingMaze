@@ -29,6 +29,21 @@ public class GameController : MonoBehaviour {
     [SerializeField] public Text state_Text;
 
 
+    public static void UpdateActivePlayer() {
+        Debug.Log(activePlayer);
+        if (activePlayer == AirConsole.instance.GetActivePlayerDeviceIds.Count - 1) {
+            Debug.Log("activePlayer to inactive ");
+            sendMessageToPlayer(updatePlayerMessage(activePlayer, false), activePlayer);
+            activePlayer = 0;
+            sendMessageToPlayer(updatePlayerMessage(activePlayer, true), activePlayer);
+        }
+        else {
+            activePlayer += 1;
+            UpdateActivePlayer(activePlayer);
+        }
+    }
+
+
 
     void Awake() {
         stateMachine = new StateMachine();
@@ -74,28 +89,29 @@ public class GameController : MonoBehaviour {
     void OnMessage(int from, JToken data)
     {   
         Debug.Log("message from " + from + " data: " + data);
-        var action = (int) data["action"];
-        Debug.Log((int)InputController.INPUT_LEFT);
-        Debug.Log(action);
-        switch (action) {
-            case (int) InputController.INPUT_LEFT:
-                GridManager.MoveArrowLeft();
-                break;
-            case (int) InputController.INPUT_RIGHT:
-                GridManager.MoveArrowRight();
-                break;
-            case (int) InputController.INPUT_UP:
-                GridManager.MoveArrowUp();
-                break;
-            case (int) InputController.INPUT_DOWN:
-                GridManager.MoveArrowDown();
-                break;
-            case (int) InputController.INPUT_ROTATE:
-                GridManager.RotateSpareTile();
-                break;
-            case (int) InputController.INPUT_INSERT:
-                GridManager.InsertTile();
-                break;
+        if (data["action"] != null) {
+            var action = (int) data["action"];
+            Debug.Log(action);
+            switch (action) {
+                case (int) InputController.INPUT_LEFT:
+                    GridManager.MoveArrowLeft();
+                    break;
+                case (int) InputController.INPUT_RIGHT:
+                    GridManager.MoveArrowRight();
+                    break;
+                case (int) InputController.INPUT_UP:
+                    GridManager.MoveArrowUp();
+                    break;
+                case (int) InputController.INPUT_DOWN:
+                    GridManager.MoveArrowDown();
+                    break;
+                case (int) InputController.INPUT_ROTATE:
+                    GridManager.RotateSpareTile();
+                    break;
+                case (int) InputController.INPUT_INSERT:
+                    GridManager.InsertTile();
+                    break;
+            }
         }
     }
     private void OnDestroy()
@@ -107,7 +123,6 @@ public class GameController : MonoBehaviour {
         Debug.Log("Starting game!!");
         try {
             AirConsole.instance.SetActivePlayers(4);
-            activeState = State.STATE_SHIFT;
         }
         catch (Exception e) {
             Console.WriteLine(e);
@@ -124,19 +139,28 @@ public class GameController : MonoBehaviour {
             var player = new Player(null, AirConsole.instance.GetNickname(AirConsole.instance.ConvertPlayerNumberToDeviceId(index)), 
                 index, AirConsole.instance.ConvertPlayerNumberToDeviceId(0), index == 0 , color[index]);
             _players.Add(player);
-            AirConsole.instance.Message(AirConsole.instance.ConvertPlayerNumberToDeviceId(index), new {
-                action = "UPDATE_STATE",
-                color = color[index] ,
-                active = index == 0,
-                device_id = AirConsole.instance.ConvertPlayerNumberToDeviceId(index)
-            });
+            sendMessageToPlayer(updatePlayerMessage(index, index == 0), index);
         }
     }
 
+    public static object updatePlayerMessage(int playerNumber, bool isActive) {
+        return new {
+            action = "UPDATE_STATE",
+            color = color[playerNumber],
+            active = isActive,
+            state = activeState,
+            device_id = AirConsole.instance.ConvertPlayerNumberToDeviceId(playerNumber)
+        };
+    }
+
+    public static void UpdateActivePlayer(int newPlayerNumber) {
+        sendMessageToPlayer(updatePlayerMessage(newPlayerNumber - 1, false), newPlayerNumber - 1);
+        sendMessageToPlayer(updatePlayerMessage(newPlayerNumber, true), newPlayerNumber);
+    }
+
     public static void sendMessageToPlayer(object message, int playerNumber) {
-        if (playerNumber > AirConsole.instance.GetActivePlayerDeviceIds.Count - 1) {
-            playerNumber = 0;
-        }
+        Debug.Log(playerNumber);
+        Debug.Log(message);
         AirConsole.instance.Message(AirConsole.instance.ConvertPlayerNumberToDeviceId(playerNumber), message);
     }
 }

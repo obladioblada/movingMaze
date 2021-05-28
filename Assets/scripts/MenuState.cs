@@ -11,9 +11,11 @@ public class MenuState : AbstractState
     {
         base.HandleInput();
         if (Input.GetKeyDown(InputController.INPUT_START)) {
-            GameController.StartGame();
             stateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
         }
-        
+    }
+
+    public override void Exit() {
+        GameController.StartGame();
     }
 }

@@ -16,8 +16,9 @@ public class StateMachine {
         startingState.Enter();
     }
 
-    public void ChangeState(AbstractState newState)
-    {
+    public void ChangeState(AbstractState newState) {
+        GameController.activeState = newState.Name;
+        currentState.Exit();
         currentState = newState;
         currentState.Enter();
         _text.text = currentState.Name.ToString();

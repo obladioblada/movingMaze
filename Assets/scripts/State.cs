@@ -15,8 +15,9 @@ public abstract class AbstractState {
 
     public StateMachine StateMachine => stateMachine;
 
-    public virtual void Enter() {
-        
+    public virtual void Enter() {}
+    
+    public virtual void Exit() {
     }
 
     public virtual void HandleInput() {}
