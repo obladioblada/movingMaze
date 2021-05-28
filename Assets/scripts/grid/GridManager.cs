@@ -11,7 +11,7 @@ namespace grid {
         [SerializeField] private GameObject tile;
         [SerializeField] private GameObject allowMoving;
         [SerializeField] private GameObject treasure;
-        private static List<Tile> _tiles;
+        public static List<Tile> _tiles;
         private static Arrow[] _arrows;
         private static int _selectedArrowIndex;
         private static int _oppositeSelectedArrowIndex;

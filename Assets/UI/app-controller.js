@@ -51,8 +51,15 @@ function App() {
         console.log("onMessage", from, data);
         if (data["action"] === "UPDATE_STATE") {
             console.log("updating state", from, data);
-            setBackground(data["color"])
-            setActive(data["active"])
+            if (data["state"] === "move") {
+                toogleButton("rotate");
+            } else if (data["state"] === "shift") {
+                toogleButton("rotate");
+            } else {
+                if(data["color"])  setBackground(data["color"])
+                if(data["active"]) setActive(data["active"])
+            }
+            
         }
     };
     
@@ -81,6 +88,24 @@ const setActive = (isActive) => {
     } else {
         document.getElementById("wrapper").classList.add('inactive');
     }
+}
+
+const toogleButton = (id) =>  {
+    console.log("toggling id:" + id)
+    var x = document.getElementById(id);
+    if (x.style.display === "none") {
+        x.style.display = "block";
+    } else {
+        x.style.display = "none";
+    }
+}
+
+const disableById = (id) => {
+    document.getElementById(id).classList.add('inactive');
+}
+
+const enableById = (id) => {
+    document.getElementById(id).classList.remove('inactive');
 }
 
 const updateController = (player) => {

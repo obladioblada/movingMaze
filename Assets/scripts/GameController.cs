@@ -5,6 +5,7 @@ using grid;
 using UnityEngine;
 using NDream.AirConsole;
 using Newtonsoft.Json.Linq;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 public class GameController : MonoBehaviour {
@@ -16,14 +17,31 @@ public class GameController : MonoBehaviour {
     
     // Use Dictionary as a map.
     static readonly Dictionary<int, string> color = new Dictionary<int, string>();
-    private int activePlayer;
+    public static int activePlayer;
+    public static State activeState;
+    private static List<Player> _players;
+
+    public  StateMachine stateMachine;
+
+    public static Dictionary<State, AbstractState> _states;
+    
+    
+    [SerializeField] public Text state_Text;
 
 
 
-    void Awake()
-    {
+    void Awake() {
+        stateMachine = new StateMachine();
+        _players = new List<Player>();
+        _states = new Dictionary<State, AbstractState> {
+            {State.STATE_MENU, new MenuState(State.STATE_MENU, stateMachine)},
+            {State.STATE_SHIFT, new ShiftingState(State.STATE_SHIFT, stateMachine)},
+            {State.STATE_MOVE, new MovingState(State.STATE_MOVE, stateMachine)}
+        };
+        stateMachine.Initialize(_states[State.STATE_MENU], state_Text);
+        
+
         Debug.Log("Awaking...");
-        // ... Add some keys and values.
         color.Add(0, RED);
         color.Add(1, YELLOW);
         color.Add(2, GREEN);
@@ -38,6 +56,12 @@ public class GameController : MonoBehaviour {
         AirConsole.instance.onConnect += OnConnect;
         AirConsole.instance.onDisconnect += OnDisconnect;
     }
+    
+    private void Update()
+    {
+        stateMachine.currentState.HandleInput();
+    }
+    
 
     void OnDisconnect(int deviceID) {
         Debug.Log("Device " + deviceID + " disconnected");
@@ -83,28 +107,36 @@ public class GameController : MonoBehaviour {
         Debug.Log("Starting game!!");
         try {
             AirConsole.instance.SetActivePlayers(4);
+            activeState = State.STATE_SHIFT;
         }
         catch (Exception e) {
             Console.WriteLine(e);
             throw;
         }
-      
-        Debug.Log(AirConsole.instance.GetActivePlayerDeviceIds);
-        Debug.Log("first player " + AirConsole.instance.ConvertPlayerNumberToDeviceId(0));
-        AirConsole.instance.Message(AirConsole.instance.ConvertPlayerNumberToDeviceId(0),new {
-            action = "UPDATE_STATE",
-            color = color[0] ,
-            active = true,
-            device_id = AirConsole.instance.ConvertPlayerNumberToDeviceId(0)
-        });
-        Debug.Log("active players " + AirConsole.instance.GetActivePlayerDeviceIds.Count);
-        for (var index = 1; index < AirConsole.instance.GetActivePlayerDeviceIds.Count; index++) {
-            AirConsole.instance.Message(AirConsole.instance.ConvertPlayerNumberToDeviceId(index),new {
+        initPlayers();
+        activePlayer = 0;
+        Debug.Log("players " + AirConsole.instance.GetActivePlayerDeviceIds.Count);
+        
+    }
+
+    private static void initPlayers() {
+        for (var index = 0; index < AirConsole.instance.GetActivePlayerDeviceIds.Count; index++) {
+            var player = new Player(null, AirConsole.instance.GetNickname(AirConsole.instance.ConvertPlayerNumberToDeviceId(index)), 
+                index, AirConsole.instance.ConvertPlayerNumberToDeviceId(0), index == 0 , color[index]);
+            _players.Add(player);
+            AirConsole.instance.Message(AirConsole.instance.ConvertPlayerNumberToDeviceId(index), new {
                 action = "UPDATE_STATE",
                 color = color[index] ,
-                active = false,
+                active = index == 0,
                 device_id = AirConsole.instance.ConvertPlayerNumberToDeviceId(index)
             });
         }
+    }
+
+    public static void sendMessageToPlayer(object message, int playerNumber) {
+        if (playerNumber > AirConsole.instance.GetActivePlayerDeviceIds.Count - 1) {
+            playerNumber = 0;
+        }
+        AirConsole.instance.Message(AirConsole.instance.ConvertPlayerNumberToDeviceId(playerNumber), message);
     }
 }
