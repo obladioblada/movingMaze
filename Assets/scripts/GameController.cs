@@ -10,6 +10,7 @@ using Random = UnityEngine.Random;
 
 public class GameController : MonoBehaviour {
     
+    static Color newCol;
     private const string RED = "#D32F2F";
     private const string YELLOW = "#F4D03F";
     private const string GREEN = "#4CAF50";
@@ -20,13 +21,14 @@ public class GameController : MonoBehaviour {
     public static int activePlayer;
     public static State activeState;
     private static List<Player> _players;
-
     public  StateMachine stateMachine;
-
     public static Dictionary<State, AbstractState> _states;
-    
-    
+
+
+    [SerializeField] public Camera cam;
     [SerializeField] public Text state_Text;
+
+    public bool isGameStarted;
 
 
     public static void UpdateActivePlayer() {
@@ -41,6 +43,7 @@ public class GameController : MonoBehaviour {
             activePlayer += 1;
             UpdateActivePlayer(activePlayer);
         }
+        if (ColorUtility.TryParseHtmlString(color[activePlayer], out newCol)) ;
     }
 
 
@@ -61,6 +64,7 @@ public class GameController : MonoBehaviour {
         color.Add(1, YELLOW);
         color.Add(2, GREEN);
         color.Add(3, BLUE);
+        ColorUtility.TryParseHtmlString(color[0], out newCol) ;
     }
 
     // Start is called before the first frame update
@@ -75,6 +79,7 @@ public class GameController : MonoBehaviour {
     private void Update()
     {
         stateMachine.currentState.HandleInput();
+        if (activeState != State.STATE_MENU) cam.backgroundColor = newCol;
     }
     
 
@@ -131,7 +136,6 @@ public class GameController : MonoBehaviour {
         initPlayers();
         activePlayer = 0;
         Debug.Log("players " + AirConsole.instance.GetActivePlayerDeviceIds.Count);
-        
     }
 
     private static void initPlayers() {

@@ -14,6 +14,7 @@ public class StateMachine {
         currentState = startingState;
         Debug.Log(startingState);
         startingState.Enter();
+        _text.text = currentState.Name.ToString();
     }
 
     public void ChangeState(AbstractState newState) {
