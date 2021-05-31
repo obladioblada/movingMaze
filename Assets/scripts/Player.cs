@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class Player {
    
-   private GameObject player;
+   public GameObject playerGameObject;
    public string name;
    private int number;
    private int deviceId;
@@ -13,7 +13,7 @@ public class Player {
    private string color;
 
    public Player(GameObject player, string name, int number, int deviceId, bool isActive, string color) {
-      this.player = player;
+      this.playerGameObject = player;
       this.name = name;
       this.number = number;
       this.deviceId = deviceId;

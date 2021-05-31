@@ -5,8 +5,13 @@ using UnityEngine;
 public class MovingState : AbstractState {
     
     public MovingState(State name, StateMachine stateMachine) : base(name, stateMachine) {}
-    
-    
+
+
+    public override void Enter() {
+        base.Enter();
+        
+    }
+
     public override void HandleInput()
     {
         base.HandleInput();

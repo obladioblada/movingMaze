@@ -30,11 +30,9 @@ public class GameController : MonoBehaviour {
     [SerializeField] public Text active_player_Text;
     [SerializeField] public GameObject playerGO;
 
-    public bool isGameStarted;
-
-
     public static void UpdateActivePlayer() {
         Debug.Log(activePlayer);
+        _players[activePlayer].playerGameObject.transform.localScale = Vector3.one;
         if (activePlayer == AirConsole.instance.GetActivePlayerDeviceIds.Count - 1) {
             Debug.Log("activePlayer to inactive ");
             sendMessageToPlayer(updatePlayerMessage(activePlayer, false), activePlayer);
@@ -45,6 +43,7 @@ public class GameController : MonoBehaviour {
             activePlayer += 1;
             UpdateActivePlayer(activePlayer);
         }
+        _players[activePlayer].playerGameObject.transform.localScale = 2 * Vector3.one;
         ColorUtility.TryParseHtmlString(color[activePlayer], out newCol);
     }
 
@@ -86,7 +85,9 @@ public class GameController : MonoBehaviour {
         }
         stateMachine.currentState.HandleInput();
         if (activeState != State.STATE_MENU) cam.backgroundColor = newCol;
-        if (activePlayer >= 0 ) active_player_Text.text = _players[activePlayer].name;
+        if (activePlayer >= 0) {
+            active_player_Text.text = _players[activePlayer].name;
+        }
     }
     
 
@@ -162,8 +163,8 @@ public class GameController : MonoBehaviour {
             Console.WriteLine(e);
             throw;
         }
-        initPlayers();
         activePlayer = 0;
+        initPlayers();
         ColorUtility.TryParseHtmlString(color[activePlayer], out newCol);
         Debug.Log("players " + AirConsole.instance.GetActivePlayerDeviceIds.Count);
     }
@@ -173,27 +174,27 @@ public class GameController : MonoBehaviour {
         Debug.Log(AirConsole.instance.GetActivePlayerDeviceIds.Count);
         for (var index = 0; index < AirConsole.instance.GetActivePlayerDeviceIds.Count; index++) {
             var c = color[index];
-            var player = new Player(initPlayerGameObject(index, c), AirConsole.instance.GetNickname(AirConsole.instance.ConvertPlayerNumberToDeviceId(index)), 
+            var playerGOGameObject = initPlayerGameObject(index, c);
+            Debug.Log("PLAYERRRRR " + index );
+            Debug.Log(playerGOGameObject.transform.position);
+            var player = new Player(playerGOGameObject, AirConsole.instance.GetNickname(AirConsole.instance.ConvertPlayerNumberToDeviceId(index)), 
                 index, AirConsole.instance.ConvertPlayerNumberToDeviceId(0), index == 0 , c);
             _players.Add(player);
             sendMessageToPlayer(updatePlayerMessage(index, index == 0), index);
         }
+        _players[activePlayer].playerGameObject.transform.localScale = 2 * Vector3.one;
     }
 
     private GameObject initPlayerGameObject(int id, string c) {
         ColorUtility.TryParseHtmlString(c, out newCol);
-        var go = Instantiate(
-            playerGO,
-            playerGO.transform.position,
-            Quaternion.identity,
-            transform);
+        var go = Instantiate(playerGO, transform);
         go.GetComponent<SpriteRenderer>().color = newCol;
         go.name = "Player_" + id;
         go.transform.position = id switch {
-            0 => new Vector2(0, 0),
-            1 => new Vector2(0, GridManager.N - 1),
-            2 => new Vector2(GridManager.N - 1, 0),
-            3 => new Vector2(GridManager.N - 1, GridManager.N - 1),
+            0 => new Vector3(0, 0, -1),
+            1 => new Vector3(0, GridManager.N - 1, -1),
+            2 => new Vector3(GridManager.N - 1, 0, -1),
+            3 => new Vector3(GridManager.N - 1, GridManager.N - 1, -1),
             _ => go.transform.position
         };
         Debug.Log("returning Player gameObj");
