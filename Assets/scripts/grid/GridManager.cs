@@ -30,11 +30,14 @@ namespace grid {
         /// NESW. It means that for [false, true, false, true]  a player on a tile can only move horizontally
         /// </summary>
         public bool[] generateWall(int type) {
+            Debug.Log("wall type: " + type);
             var wall = type switch {
-                1 => new[] {false, false, false, false},
-                2 => new[] {false, false, false, false},
-                3 => new[] {false, false, false, false},
+                1 => new[] {false, true, false, true},
+                2 => new[] {true, true, false, true},
+                3 => new[] {true, true, false, false},
                 _ => null};
+            Debug.Log(wall.Length);
+            Debug.Log(wall[0] + "" + wall[1] + "" + wall[2] + "" + wall[3]);
             return wall;
         }
 
@@ -203,6 +206,20 @@ namespace grid {
             go.transform.position = new Vector3(x, y, 0);
             go.name = y + "," + x;
             return go;
+        }
+
+        public static void CalculatePath(Player player) {
+            // todo take player position and go through the tiles to match paths
+            Debug.Log("calculating path for player" + player.name);
+            Debug.Log("POS: " + player.playerGameObject.transform.position);
+            var startingTile = _tiles.Find(t =>
+                (Vector2) t.gameObject.transform.position == (Vector2) player.playerGameObject.transform.position);
+            Debug.Log(startingTile);
+            Debug.Log("on TILE " + startingTile.gameObject.transform.position);
+            Debug.Log("with wall:");
+            var wall = startingTile.wall;
+            Debug.Log(wall[0] + "" + wall[1] + "" + wall[2] + "" + wall[3]);
+            MatchPosition.MatchTile(startingTile, player.playerGameObject.transform.position);
         }
     }
 }

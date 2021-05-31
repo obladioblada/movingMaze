@@ -47,6 +47,10 @@ public class GameController : MonoBehaviour {
         ColorUtility.TryParseHtmlString(color[activePlayer], out newCol);
     }
 
+    public static Player getActivePlayer() {
+        return _players[activePlayer];
+    }
+
 
 
     void Awake() {

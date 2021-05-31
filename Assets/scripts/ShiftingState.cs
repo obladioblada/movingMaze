@@ -25,6 +25,5 @@ public class ShiftingState : AbstractState
      public override void Exit() {
          var message = GameController.updatePlayerMessage(GameController.activePlayer, true);
          GameController.sendMessageToPlayer(message, GameController.activePlayer);
-         GridManager._tiles[0].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
      }
 }

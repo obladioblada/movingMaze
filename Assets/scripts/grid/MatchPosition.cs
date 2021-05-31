@@ -29,14 +29,15 @@ namespace grid {
         public static readonly Func<Tile, int, bool> FirstInColumn = (t, index) =>
             t.gameObject.transform.position == new Vector3(index, 0);
 
+        public static readonly Func<Tile, Vector3, Tile> MatchTile = (t, targetPosition) => t.gameObject.transform.position == targetPosition ? t : null;
+
+
         public static readonly Func<int, Vector2> BeforeFirstInRow = (index) => new Vector2(-1, index);
-        
+
         public static readonly Func<int, Vector2> AfterLastInRow = (index) => new Vector2(GridManager.N, index);
-        
+
         public static readonly Func<int, Vector2> BeforeFirstInColumn = (index) => new Vector2(index, -1);
-        
+
         public static readonly Func<int, Vector2> AfterLastInColumn = (index) =>  new Vector2(index, GridManager.N);
-
-
     }
 }

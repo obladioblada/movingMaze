@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using grid;
 using UnityEngine;
 
 public class MovingState : AbstractState {
@@ -9,8 +10,11 @@ public class MovingState : AbstractState {
 
     public override void Enter() {
         base.Enter();
-        
+        // todo Calculate paths from player position
+        GridManager.CalculatePath(GameController.getActivePlayer());
     }
+    
+    
 
     public override void HandleInput()
     {

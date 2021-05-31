@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class StateMachine {
     
     public AbstractState currentState;
+    public int activePlayer = - 1;
     private Text _text;
     
     public void Initialize(AbstractState startingState, Text text) {
@@ -24,5 +25,4 @@ public class StateMachine {
         currentState.Enter();
         _text.text = currentState.Name.ToString();
     }
-    
 }
