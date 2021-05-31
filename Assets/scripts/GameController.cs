@@ -44,6 +44,7 @@ public class GameController : MonoBehaviour {
             UpdateActivePlayer(activePlayer);
         }
         if (ColorUtility.TryParseHtmlString(color[activePlayer], out newCol)) ;
+        // calculate path
     }
 
 
@@ -91,30 +92,51 @@ public class GameController : MonoBehaviour {
         Debug.Log("Device " + deviceID + " connected");
     }
 
-    void OnMessage(int from, JToken data)
-    {   
+    void OnMessage(int from, JToken data) {
         Debug.Log("message from " + from + " data: " + data);
         if (data["action"] != null) {
             var action = (int) data["action"];
             Debug.Log(action);
-            switch (action) {
-                case (int) InputController.INPUT_LEFT:
-                    GridManager.MoveArrowLeft();
+            switch (stateMachine.currentState.Name) {
+                case State.STATE_MENU:
+                    switch (action) {
+                        case (int) InputController.INPUT_INSERT:
+                            stateMachine.ChangeState(_states[State.STATE_SHIFT]);
+                            break;
+                    }
+
                     break;
-                case (int) InputController.INPUT_RIGHT:
-                    GridManager.MoveArrowRight();
+                case State.STATE_SHIFT:
+                    switch (action) {
+                        case (int) InputController.INPUT_LEFT:
+                            GridManager.MoveArrowLeft();
+                            break;
+                        case (int) InputController.INPUT_RIGHT:
+                            GridManager.MoveArrowRight();
+                            break;
+                        case (int) InputController.INPUT_UP:
+                            GridManager.MoveArrowUp();
+                            break;
+                        case (int) InputController.INPUT_DOWN:
+                            GridManager.MoveArrowDown();
+                            break;
+                        case (int) InputController.INPUT_ROTATE:
+                            GridManager.RotateSpareTile();
+                            break;
+                        case (int) InputController.INPUT_INSERT:
+                            GridManager.InsertTile();
+                            stateMachine.ChangeState(_states[State.STATE_MOVE]);
+                            break;
+                    }
+
                     break;
-                case (int) InputController.INPUT_UP:
-                    GridManager.MoveArrowUp();
-                    break;
-                case (int) InputController.INPUT_DOWN:
-                    GridManager.MoveArrowDown();
-                    break;
-                case (int) InputController.INPUT_ROTATE:
-                    GridManager.RotateSpareTile();
-                    break;
-                case (int) InputController.INPUT_INSERT:
-                    GridManager.InsertTile();
+                case State.STATE_MOVE:
+                    switch (action) {
+                        case (int) InputController.INPUT_INSERT:
+                            stateMachine.ChangeState(_states[State.STATE_SHIFT]);
+                            break;
+                       }
+
                     break;
             }
         }

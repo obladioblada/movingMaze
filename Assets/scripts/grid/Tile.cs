@@ -9,12 +9,14 @@ namespace grid
         private readonly int _id;
         public readonly GameObject gameObject;
         public readonly GameObject treasure;
+        public readonly bool[] wall;
 
-        public Tile(int id, GameObject go, String tilePath, GameObject treasure = null) {
+        public Tile(int id, GameObject go, string tilePath, bool[] wall, GameObject treasure = null) {
             _id = id;
             gameObject = go;
             gameObject.GetComponent<SpriteRenderer>().sprite = Resources.Load<Sprite>(tilePath);
             this.treasure = treasure;
+            this.wall = wall;
         }
 
 

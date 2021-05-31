@@ -1,9 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
 using Random = UnityEngine.Random;
-
 
 namespace grid {
     public class GridManager : MonoBehaviour {
@@ -19,9 +19,23 @@ namespace grid {
         private static bool _isFirstTurn;
         
         // returns the specified tile or a random one otherwise
-        private static string GetTilePathWithNumber([CanBeNull] string tileNumber) {
-            if (tileNumber != null ) return  "Tiles/tile_" + tileNumber;
-            return "Tiles/tile_" + Random.Range(1, 4);
+        private static string GetTilePathWithNumber(int id) {
+            return  "Tiles/tile_" + id;
+        }
+        
+        /// <summary>
+        /// This static class will generate the wall for each tile and handle accessig on tiles from players
+        /// A wall is an array of 4 bool
+        /// The order of the bool represents the direction the wall is facing and it is clockwise
+        /// NESW. It means that for [false, true, false, true]  a player on a tile can only move horizontally
+        /// </summary>
+        public bool[] generateWall(int type) {
+            var wall = type switch {
+                1 => new[] {false, false, false, false},
+                2 => new[] {false, false, false, false},
+                3 => new[] {false, false, false, false},
+                _ => null};
+            return wall;
         }
 
         public enum ShiftAxis {
@@ -31,9 +45,9 @@ namespace grid {
 
         private void Awake() {
             _tiles = new List<Tile>();
-            _arrows = new Arrow[N / 2 * 4];
+            _arrows = new Arrow[N / 2 * 4]; 
             tile.transform.parent = transform;
-            _spare = new Tile(-1, tile, GetTilePathWithNumber(null));
+            _spare = new Tile(-1, tile, GetTilePathWithNumber(1), generateWall(1));
             _tiles.Add(_spare);
             GenerateGrid();
             _selectedArrowIndex = 0;
@@ -102,6 +116,10 @@ namespace grid {
             _arrows[_selectedArrowIndex].SetColor(Color.yellow);
         }
 
+        public static void showWalls() {
+            Debug.Log("wall for ");
+        }
+
         private void GenerateGrid() {
             for (var x = 0; x < N; x++) {
                 // creating arrows bottom/top side
@@ -113,9 +131,7 @@ namespace grid {
                 }
                 for (var y = 0; y < N; y++) {
                     var go = SpawnTile(x, y);
-                    string tilePath;
                     if ((x == 0 || x == N - 1) && (y == 0 || y == N - 1)) {
-                        tilePath = GetTilePathWithNumber("3");
                         go.transform.rotation = new Quaternion(0, 0, 0, 0);
                         switch (x) {
                             case 0 when y == N - 1:
@@ -128,15 +144,16 @@ namespace grid {
                                 go.transform.Rotate(0, 0, 180);
                                 break;
                         }
-                        _tiles.Add(new Tile(x + y * 10, go, tilePath));
+                        _tiles.Add(new Tile(x + y * 10, go, GetTilePathWithNumber(3), generateWall(3)));
                     } else {
-                        tilePath =  GetTilePathWithNumber(null);
+                        var tileId = Random.Range(1, 4);
+                        var tilePath = GetTilePathWithNumber(tileId);
                         GameObject t = null;
                         if (Random.Range(1, 10) < 3) {
                             t = Instantiate(treasure, go.transform.position, go.transform.rotation, go.transform);
                             t.GetComponent<Renderer>().material.color = Random.ColorHSV(0f, 1f, 1f, 1f, 0.5f, 1f);
                         }
-                        _tiles.Add(new Tile(x + y * 10, go, tilePath, t));
+                        _tiles.Add( new Tile(x + y * 10, go, tilePath, generateWall(tileId),t));
                     }
                     // creating arrows right/left side
                     if (y % 2 == 1 && x == 0) {

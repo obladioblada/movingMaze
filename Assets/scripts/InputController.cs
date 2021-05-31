@@ -13,4 +13,6 @@ public class InputController : MonoBehaviour {
     public const KeyCode INPUT_INSERT= KeyCode.I;
     public const KeyCode INPUT_START = KeyCode.S;
     public const KeyCode INPUT_SELECT = KeyCode.Space;
+    
+    
 }
