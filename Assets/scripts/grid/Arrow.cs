@@ -22,7 +22,7 @@ namespace grid {
         }
 
         public void SetColor(Color color) {
-            this.gameObject.GetComponent<SpriteRenderer>().color = color;
+            gameObject.GetComponent<SpriteRenderer>().color = color;
         }
     }
 }

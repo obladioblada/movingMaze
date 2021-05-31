@@ -18,7 +18,7 @@ public class GameController : MonoBehaviour {
     
     // Use Dictionary as a map.
     static readonly Dictionary<int, string> color = new Dictionary<int, string>();
-    public static int activePlayer;
+    public static int activePlayer = - 1;
     public static State activeState;
     private static List<Player> _players;
     public  StateMachine stateMachine;
@@ -27,6 +27,8 @@ public class GameController : MonoBehaviour {
 
     [SerializeField] public Camera cam;
     [SerializeField] public Text state_Text;
+    [SerializeField] public Text active_player_Text;
+    [SerializeField] public GameObject playerGO;
 
     public bool isGameStarted;
 
@@ -43,8 +45,7 @@ public class GameController : MonoBehaviour {
             activePlayer += 1;
             UpdateActivePlayer(activePlayer);
         }
-        if (ColorUtility.TryParseHtmlString(color[activePlayer], out newCol)) ;
-        // calculate path
+        ColorUtility.TryParseHtmlString(color[activePlayer], out newCol);
     }
 
 
@@ -79,8 +80,13 @@ public class GameController : MonoBehaviour {
     
     private void Update()
     {
+        if (stateMachine.currentState.Name == State.STATE_MENU && Input.GetKeyDown(InputController.INPUT_START)) {
+            stateMachine.ChangeState(_states[State.STATE_SHIFT]);
+            StartGame();
+        }
         stateMachine.currentState.HandleInput();
         if (activeState != State.STATE_MENU) cam.backgroundColor = newCol;
+        if (activePlayer >= 0 ) active_player_Text.text = _players[activePlayer].name;
     }
     
 
@@ -124,8 +130,9 @@ public class GameController : MonoBehaviour {
                             GridManager.RotateSpareTile();
                             break;
                         case (int) InputController.INPUT_INSERT:
-                            GridManager.InsertTile();
-                            stateMachine.ChangeState(_states[State.STATE_MOVE]);
+                            if (GridManager.InsertTile()) {
+                                stateMachine.ChangeState(_states[State.STATE_MOVE]);
+                            }
                             break;
                     }
 
@@ -146,7 +153,7 @@ public class GameController : MonoBehaviour {
         if (AirConsole.instance != null) AirConsole.instance.onMessage -= OnMessage;
     }
     
-    public static void StartGame() {
+    public void StartGame() {
         Debug.Log("Starting game!!");
         try {
             AirConsole.instance.SetActivePlayers(4);
@@ -157,16 +164,41 @@ public class GameController : MonoBehaviour {
         }
         initPlayers();
         activePlayer = 0;
+        ColorUtility.TryParseHtmlString(color[activePlayer], out newCol);
         Debug.Log("players " + AirConsole.instance.GetActivePlayerDeviceIds.Count);
     }
 
-    private static void initPlayers() {
+    private void initPlayers() {
+        Debug.Log("active player for this match! ");
+        Debug.Log(AirConsole.instance.GetActivePlayerDeviceIds.Count);
         for (var index = 0; index < AirConsole.instance.GetActivePlayerDeviceIds.Count; index++) {
-            var player = new Player(null, AirConsole.instance.GetNickname(AirConsole.instance.ConvertPlayerNumberToDeviceId(index)), 
-                index, AirConsole.instance.ConvertPlayerNumberToDeviceId(0), index == 0 , color[index]);
+            var c = color[index];
+            var player = new Player(initPlayerGameObject(index, c), AirConsole.instance.GetNickname(AirConsole.instance.ConvertPlayerNumberToDeviceId(index)), 
+                index, AirConsole.instance.ConvertPlayerNumberToDeviceId(0), index == 0 , c);
             _players.Add(player);
             sendMessageToPlayer(updatePlayerMessage(index, index == 0), index);
         }
+    }
+
+    private GameObject initPlayerGameObject(int id, string c) {
+        ColorUtility.TryParseHtmlString(c, out newCol);
+        var go = Instantiate(
+            playerGO,
+            playerGO.transform.position,
+            Quaternion.identity,
+            transform);
+        go.GetComponent<SpriteRenderer>().color = newCol;
+        go.name = "Player_" + id;
+        go.transform.position = id switch {
+            0 => new Vector2(0, 0),
+            1 => new Vector2(0, GridManager.N - 1),
+            2 => new Vector2(GridManager.N - 1, 0),
+            3 => new Vector2(GridManager.N - 1, GridManager.N - 1),
+            _ => go.transform.position
+        };
+        Debug.Log("returning Player gameObj");
+        Debug.Log(go.transform.position);
+        return go;
     }
 
     public static object updatePlayerMessage(int playerNumber, bool isActive) {

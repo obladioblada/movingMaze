@@ -55,16 +55,17 @@ namespace grid {
             _arrows[_selectedArrowIndex].SetColor(Color.yellow);
             _isFirstTurn = true;
         }
-        public static void InsertTile() {
+        public static bool InsertTile() {
             if (_oppositeSelectedArrowIndex == _selectedArrowIndex && !_isFirstTurn) {
                 Debug.Log("Can't do this because it would revert last change");
                 _arrows[_selectedArrowIndex].SetColor(Color.red);
-            } else {
-                _isFirstTurn = false;
-                // get the opposite arrow index before assigning new one to prevent reverting last action
-                _oppositeSelectedArrowIndex = _selectedArrowIndex % 2 == 0 ? _selectedArrowIndex + 1 : _selectedArrowIndex - 1;
-                ShiftTiles( _arrows[_selectedArrowIndex].index,  _arrows[_selectedArrowIndex].axes,  _arrows[_selectedArrowIndex].direction);
+                return false;
             }
+            _isFirstTurn = false;
+            // get the opposite arrow index before assigning new one to prevent reverting last action
+            _oppositeSelectedArrowIndex = _selectedArrowIndex % 2 == 0 ? _selectedArrowIndex + 1 : _selectedArrowIndex - 1;
+            ShiftTiles( _arrows[_selectedArrowIndex].index,  _arrows[_selectedArrowIndex].axes,  _arrows[_selectedArrowIndex].direction);
+            return true;
         }
 
         public static void MoveArrowRight() {

@@ -16,8 +16,9 @@ public class ShiftingState : AbstractState
         if (Input.GetKeyDown(InputController.INPUT_DOWN)) {GridManager.MoveArrowDown();}
         if (Input.GetKeyDown(InputController.INPUT_ROTATE)) {GridManager.RotateSpareTile();};
         if (Input.GetKeyDown(InputController.INPUT_INSERT)) {
-            GridManager.InsertTile();
-            StateMachine.ChangeState(GameController._states[State.STATE_MOVE]);
+            if (GridManager.InsertTile()) {
+                StateMachine.ChangeState(GameController._states[State.STATE_MOVE]);
+            }
         };
     }
     

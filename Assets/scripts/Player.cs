@@ -6,7 +6,7 @@ using UnityEngine;
 public class Player {
    
    private GameObject player;
-   private string name;
+   public string name;
    private int number;
    private int deviceId;
    private bool isActive;
