@@ -30,6 +30,8 @@ public class GameController : MonoBehaviour {
     [SerializeField] public Text active_player_Text;
     [SerializeField] public GameObject playerGO;
 
+    private bool onPlayersReady;
+
     public static void UpdateActivePlayer() {
         Debug.Log(activePlayer);
         _players[activePlayer].playerGameObject.transform.localScale = Vector3.one;
@@ -83,7 +85,8 @@ public class GameController : MonoBehaviour {
     
     private void Update()
     {
-        if (stateMachine.currentState.Name == State.STATE_MENU && Input.GetKeyDown(InputController.INPUT_START)) {
+        if (stateMachine.currentState.Name == State.STATE_MENU && 
+            Input.GetKeyDown(InputController.INPUT_START) && onPlayersReady) {
             stateMachine.ChangeState(_states[State.STATE_SHIFT]);
             StartGame();
         }
@@ -101,6 +104,7 @@ public class GameController : MonoBehaviour {
 
     void OnConnect(int deviceID) {
         Debug.Log("Device " + deviceID + " connected");
+        onPlayersReady = true;
     }
 
     void OnMessage(int from, JToken data) {
