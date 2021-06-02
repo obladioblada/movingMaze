@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Assertions.Must;
 using Random = UnityEngine.Random;
 
 namespace grid {
@@ -118,6 +119,7 @@ namespace grid {
         }
 
         private bool rotating;
+        private bool shifting;
         private IEnumerator Rotate( Vector3 angles, float duration )
         {
             rotating = true ;
@@ -136,9 +138,27 @@ namespace grid {
         {
             if(!rotating)
                 StartCoroutine(Rotate(new Vector3(
-                    _spare.gameObject.transform.rotation.x,
-                    _spare.gameObject.transform.rotation.y,
-                    _spare.gameObject.transform.rotation.z + 90), 0.2f));
+                    0,
+                    0,
+                    90), 0.2f));
+        }
+        
+        
+        private IEnumerator Shift( GameObject  go, Vector3 direction, float duration )
+        {
+            Vector3 startPosition = go.transform.position ;
+            Vector3 endPosition = startPosition + direction;
+            for( float t = 0 ; t < duration ; t+= Time.deltaTime )
+            {
+                go.transform.position = Vector3.Lerp( startPosition, endPosition, t / duration ) ;
+                yield return null;
+            }
+            go.transform.position = endPosition  ;
+        }
+ 
+        public void StartShift(GameObject go, Vector3  direction)
+        {
+            StartCoroutine(Shift(go, direction, 0.2f));
         }
         
         // swap color and   
@@ -201,7 +221,7 @@ namespace grid {
             Destroy(treasure);
         }
         
-        private static void ShiftTiles(int index, ShiftAxis axis, Vector3 direction) {
+        private void ShiftTiles(int index, ShiftAxis axis, Vector3 direction) {
             if (index % 2 != 1) return;
             if (axis == ShiftAxis.Horizontally) {
                 var leftOver = _tiles.First(t =>
@@ -215,7 +235,8 @@ namespace grid {
             }
 
             foreach (var t in _tiles.Where(x => axis == ShiftAxis.Horizontally ? x.IsAtRow(index) : x.IsAtColumn(index))) {
-                t.Shift(direction);
+                //t.Shift(direction);
+                StartShift(t.gameObject, direction);
             }
         }
 
