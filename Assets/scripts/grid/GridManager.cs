@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
@@ -58,7 +59,7 @@ namespace grid {
             _arrows[_selectedArrowIndex].SetColor(Color.yellow);
             _isFirstTurn = true;
         }
-        public static bool InsertTile() {
+        public bool InsertTile() {
             if (_oppositeSelectedArrowIndex == _selectedArrowIndex && !_isFirstTurn) {
                 Debug.Log("Can't do this because it would revert last change");
                 _arrows[_selectedArrowIndex].SetColor(Color.red);
@@ -71,7 +72,7 @@ namespace grid {
             return true;
         }
 
-        public static void MoveArrowRight() {
+        public void MoveArrowRight() {
             if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.left)) return;
             if (_selectedArrowIndex ==  MatchPosition.ARROW_NE)   GetArrowAtIndex(MatchPosition.ARROW_EN);
             else if (_selectedArrowIndex == MatchPosition.ARROW_SE) GetArrowAtIndex(MatchPosition.ARROW_ES);
@@ -79,7 +80,7 @@ namespace grid {
             else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Horizontally)) ShiftArrow(MatchPosition.shiftOppositeRightOrUp);
         }
 
-        public static void MoveArrowLeft() {
+        public void MoveArrowLeft() {
             if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.right)) return;
             if (_selectedArrowIndex == MatchPosition.ARROW_NW) GetArrowAtIndex(MatchPosition.ARROW_WN);
             else if (_selectedArrowIndex == MatchPosition.ARROW_SW) GetArrowAtIndex(MatchPosition.ARROW_WS);
@@ -87,7 +88,7 @@ namespace grid {
             else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Horizontally)) ShiftArrow(MatchPosition.shiftOppositeLeftOrDown);
         }
         
-        public static void MoveArrowUp() {
+        public void MoveArrowUp() {
             if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.down)) return;
             if (_selectedArrowIndex == MatchPosition.ARROW_WN) GetArrowAtIndex(MatchPosition.ARROW_NW);
             else if (_selectedArrowIndex == MatchPosition.ARROW_EN) GetArrowAtIndex(MatchPosition.ARROW_NE);
@@ -95,7 +96,7 @@ namespace grid {
             else ShiftArrow(MatchPosition.ShiftUpOrRight);
         }
         
-        public static void MoveArrowDown() {
+        public void MoveArrowDown() {
             if ( _arrows[_selectedArrowIndex].direction == Vector3.up) return;
             if (_selectedArrowIndex == MatchPosition.ARROW_WS) GetArrowAtIndex(MatchPosition.ARROW_SW);
             else if (_selectedArrowIndex == MatchPosition.ARROW_ES) GetArrowAtIndex(MatchPosition.ARROW_SE);
@@ -108,9 +109,36 @@ namespace grid {
             GetArrowAtIndex(_selectedArrowIndex + offset);
         }
 
-        public static void RotateSpareTile() {
+        public void RotateSpareTile() {
             Debug.Log("rotating");
-            _spare.gameObject.transform.Rotate(0, 0, 90);
+            Quaternion rot = _spare.gameObject.transform.rotation;
+            StartRotation();
+           // _spare.gameObject.transform.rotation = Quaternion.Lerp(rot, new Quaternion(rot.x, rot.y, rot.z + 90, rot.w), Time.time * 10);;
+            //_spare.gameObject.transform.Rotate(0, 0, 90);
+        }
+
+        private bool rotating;
+        private IEnumerator Rotate( Vector3 angles, float duration )
+        {
+            rotating = true ;
+            Quaternion startRotation = _spare.gameObject.transform.rotation ;
+            Quaternion endRotation = Quaternion.Euler( angles ) * startRotation ;
+            for( float t = 0 ; t < duration ; t+= Time.deltaTime )
+            {
+                _spare.gameObject.transform.rotation = Quaternion.Lerp( startRotation, endRotation, t / duration ) ;
+                yield return null;
+            }
+            _spare.gameObject.transform.rotation = endRotation  ;
+            rotating = false;
+        }
+ 
+        public void StartRotation()
+        {
+            if(!rotating)
+                StartCoroutine(Rotate(new Vector3(
+                    _spare.gameObject.transform.rotation.x,
+                    _spare.gameObject.transform.rotation.y,
+                    _spare.gameObject.transform.rotation.z + 90), 0.2f));
         }
         
         // swap color and   

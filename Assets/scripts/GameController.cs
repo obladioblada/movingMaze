@@ -29,7 +29,9 @@ public class GameController : MonoBehaviour {
     [SerializeField] public Text state_Text;
     [SerializeField] public Text active_player_Text;
     [SerializeField] public GameObject playerGO;
-
+    
+    public GameObject gridGameObject;
+    public static GridManager gridManager;
     private bool onPlayersReady;
 
     public static void UpdateActivePlayer() {
@@ -56,6 +58,7 @@ public class GameController : MonoBehaviour {
 
 
     void Awake() {
+        gridManager = gridGameObject.GetComponent<GridManager>();
         stateMachine = new StateMachine();
         _players = new List<Player>();
         _states = new Dictionary<State, AbstractState> {
@@ -124,22 +127,22 @@ public class GameController : MonoBehaviour {
                 case State.STATE_SHIFT:
                     switch (action) {
                         case (int) InputController.INPUT_LEFT:
-                            GridManager.MoveArrowLeft();
+                            gridManager.MoveArrowLeft();
                             break;
                         case (int) InputController.INPUT_RIGHT:
-                            GridManager.MoveArrowRight();
+                            gridManager.MoveArrowRight();
                             break;
                         case (int) InputController.INPUT_UP:
-                            GridManager.MoveArrowUp();
+                            gridManager.MoveArrowUp();
                             break;
                         case (int) InputController.INPUT_DOWN:
-                            GridManager.MoveArrowDown();
+                            gridManager.MoveArrowDown();
                             break;
                         case (int) InputController.INPUT_ROTATE:
-                            GridManager.RotateSpareTile();
+                            gridManager.RotateSpareTile();
                             break;
                         case (int) InputController.INPUT_INSERT:
-                            if (GridManager.InsertTile()) {
+                            if (gridManager.InsertTile()) {
                                 stateMachine.ChangeState(_states[State.STATE_MOVE]);
                             }
                             break;
