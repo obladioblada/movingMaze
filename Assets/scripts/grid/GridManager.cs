@@ -14,11 +14,11 @@ namespace grid {
         [SerializeField] private GameObject allowMoving;
         [SerializeField] private GameObject treasure;
         public static List<Tile> _tiles;
-        private static Arrow[] _arrows;
-        private static int _selectedArrowIndex;
+        public static Arrow[] _arrows;
+        public static int _selectedArrowIndex;
         private static int _oppositeSelectedArrowIndex;
         private static Tile _spare;
-        private static bool _isFirstTurn;
+        public static bool _isFirstTurn;
         
         // returns the specified tile or a random one otherwise
         private static string GetTilePathWithNumber(int id) {
@@ -41,6 +41,13 @@ namespace grid {
             Debug.Log(wall.Length);
             Debug.Log(wall[0] + "" + wall[1] + "" + wall[2] + "" + wall[3]);
             return wall;
+        }
+
+        public static  Arrow GetSelectedArrow() {
+            return _arrows[_selectedArrowIndex];
+        }
+        public static Arrow GetOppositeSelectedArrow() {
+            return _arrows[_oppositeSelectedArrowIndex];
         }
 
         public enum ShiftAxis {
@@ -67,6 +74,7 @@ namespace grid {
                 return false;
             }
             _isFirstTurn = false;
+            _arrows[_oppositeSelectedArrowIndex].SetColor(Color.grey);
             // get the opposite arrow index before assigning new one to prevent reverting last action
             _oppositeSelectedArrowIndex = _selectedArrowIndex % 2 == 0 ? _selectedArrowIndex + 1 : _selectedArrowIndex - 1;
             ShiftTiles( _arrows[_selectedArrowIndex].index,  _arrows[_selectedArrowIndex].axes,  _arrows[_selectedArrowIndex].direction);
@@ -164,8 +172,12 @@ namespace grid {
         // swap color and   
         private static void GetArrowAtIndex(int arrowIndex) {
             _arrows[_selectedArrowIndex].SetColor(Color.gray);
+            if (_arrows[_selectedArrowIndex] == _arrows[_oppositeSelectedArrowIndex]) {
+                _arrows[_selectedArrowIndex].SetColor(Color.red);
+            }
             _selectedArrowIndex = arrowIndex;
             _arrows[_selectedArrowIndex].SetColor(Color.yellow);
+            
         }
 
         public static void showWalls() {

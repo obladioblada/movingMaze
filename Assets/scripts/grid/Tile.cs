@@ -19,6 +19,10 @@ namespace grid
             this.wall = wall;
         }
 
+        public void SetColor(Color color) {
+            gameObject.GetComponent<SpriteRenderer>().color = color;
+        }
+
 
         public void Shift(Vector3 direction)
         {

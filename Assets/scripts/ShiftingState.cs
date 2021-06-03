@@ -7,7 +7,15 @@ public class ShiftingState : AbstractState {
     
     private bool rotating;
     public ShiftingState(State name, StateMachine stateMachine) : base(name, stateMachine) { }
-    
+
+    public override void Enter() {
+        base.Enter();
+        GridManager.GetSelectedArrow().SetColor(Color.yellow);
+        if (!GridManager._isFirstTurn) {
+            GridManager.GetOppositeSelectedArrow().SetColor(Color.red);
+        }
+    }
+
     public override void HandleInput()
     {
         base.HandleInput();
