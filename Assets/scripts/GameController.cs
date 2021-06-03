@@ -21,7 +21,7 @@ public class GameController : MonoBehaviour {
     public static int activePlayer = - 1;
     public static State activeState;
     private static List<Player> _players;
-    public  StateMachine stateMachine;
+    public StateMachine stateMachine = new StateMachine();
     public static Dictionary<State, AbstractState> _states;
 
 
@@ -59,16 +59,7 @@ public class GameController : MonoBehaviour {
 
     void Awake() {
         gridManager = gridGameObject.GetComponent<GridManager>();
-        stateMachine = new StateMachine();
         _players = new List<Player>();
-        _states = new Dictionary<State, AbstractState> {
-            {State.STATE_MENU, new MenuState(State.STATE_MENU, stateMachine)},
-            {State.STATE_SHIFT, new ShiftingState(State.STATE_SHIFT, stateMachine)},
-            {State.STATE_MOVE, new MovingState(State.STATE_MOVE, stateMachine)}
-        };
-        stateMachine.Initialize(_states[State.STATE_MENU], state_Text);
-        
-
         Debug.Log("Awaking...");
         color.Add(0, RED);
         color.Add(1, YELLOW);
@@ -81,6 +72,12 @@ public class GameController : MonoBehaviour {
     void Start()
     {
         Debug.Log("Starting...");
+        _states = new Dictionary<State, AbstractState> {
+            {State.STATE_MENU, new MenuState(State.STATE_MENU, stateMachine)},
+            {State.STATE_SHIFT, new ShiftingState(State.STATE_SHIFT, stateMachine)},
+            {State.STATE_MOVE, new MovingState(State.STATE_MOVE, stateMachine)}
+        };
+        stateMachine.Initialize(_states[State.STATE_MENU], state_Text);
         AirConsole.instance.onMessage += OnMessage;
         AirConsole.instance.onConnect += OnConnect;
         AirConsole.instance.onDisconnect += OnDisconnect;
@@ -88,7 +85,7 @@ public class GameController : MonoBehaviour {
     
     private void Update()
     {
-        if (stateMachine.currentState.Name == State.STATE_MENU && 
+        if (stateMachine != null && stateMachine.currentState.Name == State.STATE_MENU && 
             Input.GetKeyDown(InputController.INPUT_START) && onPlayersReady) {
             stateMachine.ChangeState(_states[State.STATE_SHIFT]);
             StartGame();

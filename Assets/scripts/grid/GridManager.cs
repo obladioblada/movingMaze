@@ -144,10 +144,10 @@ namespace grid {
         }
         
         
-        private IEnumerator Shift( GameObject  go, Vector3 direction, float duration )
+        private IEnumerator Shift( GameObject  go, Vector3 direction, float duration, bool newPosition )
         {
             Vector3 startPosition = go.transform.position ;
-            Vector3 endPosition = startPosition + direction;
+            Vector3 endPosition = newPosition ? direction : startPosition + direction;
             for( float t = 0 ; t < duration ; t+= Time.deltaTime )
             {
                 go.transform.position = Vector3.Lerp( startPosition, endPosition, t / duration ) ;
@@ -156,9 +156,9 @@ namespace grid {
             go.transform.position = endPosition  ;
         }
  
-        public void StartShift(GameObject go, Vector3  direction)
+        public void StartShift(GameObject go, Vector3  direction, bool newPos)
         {
-            StartCoroutine(Shift(go, direction, 0.2f));
+            StartCoroutine(Shift(go, direction, 0.2f, newPos));
         }
         
         // swap color and   
@@ -236,11 +236,11 @@ namespace grid {
 
             foreach (var t in _tiles.Where(x => axis == ShiftAxis.Horizontally ? x.IsAtRow(index) : x.IsAtColumn(index))) {
                 //t.Shift(direction);
-                StartShift(t.gameObject, direction);
+                StartShift(t.gameObject, direction, false);
             }
         }
 
-        private static void SwapTiles(Tile newSpare, Vector2 oldSparePosition) {
+        private void SwapTiles(Tile newSpare, Vector2 oldSparePosition) {
             newSpare.gameObject.transform.position = _spare.gameObject.transform.position;
             _spare.gameObject.transform.position = oldSparePosition;
             _spare = newSpare;
