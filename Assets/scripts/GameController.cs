@@ -65,18 +65,20 @@ public class GameController : MonoBehaviour {
         AirConsole.instance.onConnect += OnConnect;
         AirConsole.instance.onDisconnect += OnDisconnect;
     }
-    
-    private void Update()
-    {
-        if (stateMachine != null && stateMachine.currentState.Name == State.STATE_MENU && 
-            Input.GetKeyDown(InputController.INPUT_START) && onPlayersReady) {
-            stateMachine.ChangeState(_states[State.STATE_SHIFT]);
-            StartGame();
-        }
-        stateMachine.currentState.HandleInput();
-        if (activeState != State.STATE_MENU) cam.backgroundColor = newCol;
-        if (activePlayer >= 0) {
-            active_player_Text.text = _players[activePlayer].name;
+
+    private void Update() {
+        if (stateMachine != null && stateMachine.currentState != null) {
+            if (stateMachine.currentState.Name == State.STATE_MENU &&
+                Input.GetKeyDown(InputController.INPUT_START) && onPlayersReady) {
+                stateMachine.ChangeState(_states[State.STATE_SHIFT]);
+                StartGame();
+            }
+
+            stateMachine.currentState.HandleInput();
+            if (activeState != State.STATE_MENU) cam.backgroundColor = newCol;
+            if (activePlayer >= 0) {
+                active_player_Text.text = _players[activePlayer].name;
+            }
         }
     }
     

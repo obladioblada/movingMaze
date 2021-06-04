@@ -10,6 +10,7 @@ namespace grid
         public readonly GameObject gameObject;
         public readonly GameObject treasure;
         public readonly bool[] wall;
+        public bool explored;
 
         public Tile(int id, GameObject go, string tilePath, bool[] wall, GameObject treasure = null) {
             _id = id;
@@ -17,6 +18,7 @@ namespace grid
             gameObject.GetComponent<SpriteRenderer>().sprite = Resources.Load<Sprite>(tilePath);
             this.treasure = treasure;
             this.wall = wall;
+            explored = false;
         }
 
         public void SetColor(Color color) {

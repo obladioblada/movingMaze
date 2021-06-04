@@ -14,6 +14,7 @@ namespace grid {
         [SerializeField] private GameObject allowMoving;
         [SerializeField] private GameObject treasure;
         public List<Tile> _tiles;
+        public List<Tile> _allowdTilepaths;
         public Arrow[] _arrows;
         public int _selectedArrowIndex;
         private int _oppositeSelectedArrowIndex;
@@ -55,8 +56,9 @@ namespace grid {
 
         private void Awake() {
             _tiles = new List<Tile>();
+            _allowdTilepaths = new List<Tile>();
             _arrows = new Arrow[N / 2 * 4]; 
-            tile.transform.parent = transform;
+             tile.transform.parent = transform;
             _spare = new Tile(-1, tile, GetTilePathWithNumber(1), generateWall(1));
             _tiles.Add(_spare);
             GenerateGrid();
@@ -152,7 +154,7 @@ namespace grid {
                 StartCoroutine(Rotate(new Vector3(
                     0,
                     0,
-                    -90), 0.2f));
+                    -90), 0.1f));
         }
         
         
@@ -165,29 +167,26 @@ namespace grid {
                 go.transform.position = Vector3.Lerp( startPosition, endPosition, t / duration ) ;
                 yield return null;
             }
-            go.transform.position = endPosition  ;
+            go.transform.position = endPosition;
+            yield return new WaitForSeconds(0.3f);
+            CalculatePath(GameController.getActivePlayer());
         }
  
         public void StartShift(GameObject go, Vector3  direction, bool newPos)
         {
-            StartCoroutine(Shift(go, direction, 0.2f, newPos));
+            StartCoroutine(Shift(go, direction, 0.1f, newPos));
         }
         
         // swap color and   
         private void GetArrowAtIndex(int arrowIndex) {
             _arrows[_selectedArrowIndex].SetColor(Color.gray);
-            if (_arrows[_selectedArrowIndex] == _arrows[_oppositeSelectedArrowIndex]) {
+            if (_arrows[_selectedArrowIndex] == _arrows[_oppositeSelectedArrowIndex] && !_isFirstTurn) {
                 _arrows[_selectedArrowIndex].SetColor(Color.red);
             }
             _selectedArrowIndex = arrowIndex;
             _arrows[_selectedArrowIndex].SetColor(Color.yellow);
             
         }
-
-        public static void showWalls() {
-            Debug.Log("wall for ");
-        }
-
         private void GenerateGrid() {
             for (var x = 0; x < N; x++) {
                 // creating arrows bottom/top side
@@ -258,7 +257,11 @@ namespace grid {
             }
 
             foreach (var t in _tiles.Where(x => axis == ShiftAxis.Horizontally ? x.IsAtRow(index) : x.IsAtColumn(index))) {
-                //t.Shift(direction);
+                if ((Vector2) GameController.getActivePlayer().playerGameObject.transform.position ==
+                    (Vector2) t.gameObject.transform.position) {
+                    Debug.Log("player on the way! moving");
+                    StartShift(GameController.getActivePlayer().playerGameObject, direction, false);
+                }
                 StartShift(t.gameObject, direction, false);
             }
         }
@@ -286,9 +289,31 @@ namespace grid {
             Debug.Log(startingTile);
             Debug.Log("on TILE " + startingTile.gameObject.transform.position);
             Debug.Log("with wall:");
-            var wall = startingTile.wall;
-            Debug.Log(wall[0] + "" + wall[1] + "" + wall[2] + "" + wall[3]);
-            MatchPosition.MatchTile(startingTile, player.playerGameObject.transform.position);
+            // todo get all possible connection from player position (startingTile)
+            recursiveExplorePlayerGrid(startingTile);
+        }
+
+        private void recursiveExplorePlayerGrid(Tile startingTile) {
+            if (startingTile.explored) return;
+            startingTile.explored = true;
+            startingTile.SetColor(Color.yellow);
+            Vector2[] dir = new[] {Vector2.up, Vector2.right, Vector2.down, Vector2.left};
+            int[] TileToCheckDir = new[] {2, 3, 0, 1}; // SWNE
+            Vector2 startingTilePos = startingTile.gameObject.transform.position;
+            // i = direction NESW
+            Debug.Log("starting checking adjacent tiles"); 
+            for (var i = 0; i < 4; i++) {
+                // check the walls and if true it means I could theoretically move to new tile
+                var nextTileToCheck = _tiles.FirstOrDefault(t => (Vector2) t.gameObject.transform.position == startingTilePos + dir[i]);
+                //check if path on i direction 
+                if (startingTile.wall[i] && nextTileToCheck != null && nextTileToCheck.wall[TileToCheckDir[i]]) {
+                    Debug.Log("find adjacent tile where I can go!"); 
+                    Debug.Log(nextTileToCheck.gameObject.transform.position); 
+                    // there is connection between starting path and nextTileToCheck, will save it in the array of possible Paths
+                    _allowdTilepaths.Add(nextTileToCheck);
+                    recursiveExplorePlayerGrid(nextTileToCheck);
+                }
+            }
         }
 
         public void MovePlayer(Player player, Vector2 pos) {

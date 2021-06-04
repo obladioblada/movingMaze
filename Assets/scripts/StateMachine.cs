@@ -19,6 +19,7 @@ public class StateMachine {
     }
 
     public void ChangeState(AbstractState newState) {
+        Debug.Log("Changing State to " + newState.Name);
         GameController.activeState = newState.Name;
         currentState.Exit();
         currentState = newState;

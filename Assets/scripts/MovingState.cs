@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using grid;
 using UnityEngine;
 
@@ -15,8 +16,14 @@ public class MovingState : AbstractState {
         var baseTile = GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == (Vector2) playerPosition);
         baseTile.SetColor(Color.gray);
         selectedTilePos = baseTile.gameObject.transform.position;
-        GameController.gridManager.CalculatePath(GameController.getActivePlayer());
-        baseTile.SetColor(Color.white);
+    }
+
+    private void clearTilePath() {
+        foreach (var tile in GameController.gridManager._allowdTilepaths) {
+            tile.explored = false;
+            tile.SetColor(Color.white);
+        }
+        GameController.gridManager._allowdTilepaths.Clear();
     }
     
 
@@ -25,13 +32,15 @@ public class MovingState : AbstractState {
         base.HandleInput();
         if (Input.GetKeyDown(InputController.INPUT_INSERT)) {
             var onTile = GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos);
-            GameController.gridManager.MovePlayer(GameController.getActivePlayer(), onTile.gameObject.transform.position);
-            StateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
+            if (GameController.gridManager._allowdTilepaths.Contains(onTile)) {
+                GameController.gridManager.MovePlayer(GameController.getActivePlayer(), onTile.gameObject.transform.position);
+                StateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
+            }
         }
 
         // todo handle movement around the grid of a player
         if (Input.GetKeyDown(InputController.INPUT_LEFT)) {
-            GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position ==  selectedTilePos).SetColor(Color.white);
+            resetTileColor();
             if (selectedTilePos.x == 0) selectedTilePos = new Vector2(GridManager.N - 1, selectedTilePos.y);
             else selectedTilePos += Vector2.left;
             GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position ==  selectedTilePos).SetColor(Color.gray);
@@ -39,30 +48,36 @@ public class MovingState : AbstractState {
         }
 
         if (Input.GetKeyDown(InputController.INPUT_RIGHT)) {
-            GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos).SetColor(Color.white);
-            if ((int)selectedTilePos.x == GridManager.N - 1) selectedTilePos = new Vector2(0, selectedTilePos.y);
+            resetTileColor();            if ((int)selectedTilePos.x == GridManager.N - 1) selectedTilePos = new Vector2(0, selectedTilePos.y);
             else selectedTilePos += Vector2.right;
             GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos).SetColor(Color.grey);
         }
 
         if (Input.GetKeyDown(InputController.INPUT_UP)) {
-            GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos).SetColor(Color.white);
+            resetTileColor();    
             if ((int)selectedTilePos.y == GridManager.N - 1) selectedTilePos = new Vector2( selectedTilePos.x, 0);
             else selectedTilePos += Vector2.up;
             GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos).SetColor(Color.grey);
         }
 
         if (Input.GetKeyDown(InputController.INPUT_DOWN)) {
-            GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos).SetColor(Color.white);
+            resetTileColor();
             if ((int)selectedTilePos.y == 0) selectedTilePos = new Vector2( selectedTilePos.x, GridManager.N - 1);
             else selectedTilePos += Vector2.down;
             GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position ==  selectedTilePos).SetColor(Color.gray);
         }
     }
 
+    private void resetTileColor() {
+        var currentTile = GameController.gridManager._tiles.FirstOrDefault(t => (Vector2) t.gameObject.transform.position == selectedTilePos);
+        if (currentTile == null) return;
+        currentTile.SetColor(GameController.gridManager._allowdTilepaths.Contains(currentTile) ? Color.yellow : Color.white);
+    }
+
     public override void Exit() {
         Debug.Log("calling exit from moving!");
         Debug.Log("current activePlayer " + GameController.activePlayer);
+        clearTilePath();
         GameController.UpdateActivePlayer();
     }
 }
