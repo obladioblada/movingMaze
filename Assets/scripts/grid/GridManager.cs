@@ -13,12 +13,12 @@ namespace grid {
         [SerializeField] private GameObject tile;
         [SerializeField] private GameObject allowMoving;
         [SerializeField] private GameObject treasure;
-        public static List<Tile> _tiles;
-        public static Arrow[] _arrows;
-        public static int _selectedArrowIndex;
-        private static int _oppositeSelectedArrowIndex;
-        private static Tile _spare;
-        public static bool _isFirstTurn;
+        public List<Tile> _tiles;
+        public Arrow[] _arrows;
+        public int _selectedArrowIndex;
+        private int _oppositeSelectedArrowIndex;
+        private Tile _spare;
+        public bool _isFirstTurn;
         
         // returns the specified tile or a random one otherwise
         private static string GetTilePathWithNumber(int id) {
@@ -43,10 +43,10 @@ namespace grid {
             return wall;
         }
 
-        public static  Arrow GetSelectedArrow() {
+        public Arrow GetSelectedArrow() {
             return _arrows[_selectedArrowIndex];
         }
-        public static Arrow GetOppositeSelectedArrow() {
+        public  Arrow GetOppositeSelectedArrow() {
             return _arrows[_oppositeSelectedArrowIndex];
         }
 
@@ -114,7 +114,7 @@ namespace grid {
         }
         
         
-        private static void ShiftArrow(int offset) {
+        private void ShiftArrow(int offset) {
             GetArrowAtIndex(_selectedArrowIndex + offset);
         }
 
@@ -170,7 +170,7 @@ namespace grid {
         }
         
         // swap color and   
-        private static void GetArrowAtIndex(int arrowIndex) {
+        private void GetArrowAtIndex(int arrowIndex) {
             _arrows[_selectedArrowIndex].SetColor(Color.gray);
             if (_arrows[_selectedArrowIndex] == _arrows[_oppositeSelectedArrowIndex]) {
                 _arrows[_selectedArrowIndex].SetColor(Color.red);
@@ -269,7 +269,7 @@ namespace grid {
             return go;
         }
 
-        public static void CalculatePath(Player player) {
+        public void CalculatePath(Player player) {
             // todo take player position and go through the tiles to match paths
             Debug.Log("calculating path for player" + player.name);
             Debug.Log("POS: " + player.playerGameObject.transform.position);

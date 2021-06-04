@@ -11,14 +11,13 @@ public class MovingState : AbstractState {
 
     public override void Enter() {
         base.Enter();
-        // todo Calculate paths from player position
         var playerPosition = GameController.getActivePlayer().playerGameObject.transform.position;
-        var baseTile = GridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == (Vector2) playerPosition);
+        var baseTile = GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == (Vector2) playerPosition);
         baseTile.SetColor(Color.blue);
         selectedTilePos = baseTile.gameObject.transform.position;
-        GridManager.CalculatePath(GameController.getActivePlayer());
+        GameController.gridManager.CalculatePath(GameController.getActivePlayer());
+        // todo Calculate paths from player position
     }
-    
     
 
     public override void HandleInput()
@@ -30,35 +29,35 @@ public class MovingState : AbstractState {
 
         // todo handle movement around the grid of a player
         if (Input.GetKeyDown(InputController.INPUT_LEFT)) {
-            GridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position ==  selectedTilePos).SetColor(Color.white);
+            GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position ==  selectedTilePos).SetColor(Color.white);
             if (selectedTilePos.x == 0) selectedTilePos = new Vector2(GridManager.N - 1, selectedTilePos.y);
             else selectedTilePos += Vector2.left;
-            GridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position ==  selectedTilePos).SetColor(Color.blue);
+            GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position ==  selectedTilePos).SetColor(Color.gray);
 
         }
 
         if (Input.GetKeyDown(InputController.INPUT_RIGHT)) {
-            GridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos).SetColor(Color.white);
+            GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos).SetColor(Color.white);
             if ((int)selectedTilePos.x == GridManager.N - 1) selectedTilePos = new Vector2(0, selectedTilePos.y);
             else selectedTilePos += Vector2.right;
-            GridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos).SetColor(Color.blue);
+            GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos).SetColor(Color.grey);
         }
 
         if (Input.GetKeyDown(InputController.INPUT_UP)) {
-            GridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos).SetColor(Color.white);
+            GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos).SetColor(Color.white);
             if ((int)selectedTilePos.y == GridManager.N - 1) selectedTilePos = new Vector2( selectedTilePos.x, 0);
             else selectedTilePos += Vector2.up;
-            GridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos).SetColor(Color.blue);
+            GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos).SetColor(Color.grey);
         }
 
         if (Input.GetKeyDown(InputController.INPUT_DOWN)) {
-            GridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos).SetColor(Color.white);
+            GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos).SetColor(Color.white);
             if ((int)selectedTilePos.y == 0) selectedTilePos = new Vector2( selectedTilePos.x, GridManager.N - 1);
-            selectedTilePos += Vector2.down;
-            GridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position ==  selectedTilePos).SetColor(Color.blue);
+            else selectedTilePos += Vector2.down;
+            GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position ==  selectedTilePos).SetColor(Color.gray);
         }
     }
-    
+
     public override void Exit() {
         Debug.Log("calling exit from moving!");
         Debug.Log("current activePlayer " + GameController.activePlayer);

@@ -10,9 +10,9 @@ public class ShiftingState : AbstractState {
 
     public override void Enter() {
         base.Enter();
-        GridManager.GetSelectedArrow().SetColor(Color.yellow);
-        if (!GridManager._isFirstTurn) {
-            GridManager.GetOppositeSelectedArrow().SetColor(Color.red);
+        GameController.gridManager.GetSelectedArrow().SetColor(Color.yellow);
+        if (!GameController.gridManager._isFirstTurn) {
+            GameController.gridManager.GetOppositeSelectedArrow().SetColor(Color.red);
         }
     }
 

@@ -20,7 +20,7 @@ public class GameController : MonoBehaviour {
     static readonly Dictionary<int, string> color = new Dictionary<int, string>();
     public static int activePlayer = - 1;
     public static State activeState;
-    private static List<Player> _players;
+    public static List<Player> _players;
     public StateMachine stateMachine = new StateMachine();
     public static Dictionary<State, AbstractState> _states;
 
@@ -33,23 +33,6 @@ public class GameController : MonoBehaviour {
     public GameObject gridGameObject;
     public static GridManager gridManager;
     private bool onPlayersReady;
-
-    public static void UpdateActivePlayer() {
-        Debug.Log(activePlayer);
-        _players[activePlayer].playerGameObject.transform.localScale = Vector3.one;
-        if (activePlayer == AirConsole.instance.GetActivePlayerDeviceIds.Count - 1) {
-            Debug.Log("activePlayer to inactive ");
-            sendMessageToPlayer(updatePlayerMessage(activePlayer, false), activePlayer);
-            activePlayer = 0;
-            sendMessageToPlayer(updatePlayerMessage(activePlayer, true), activePlayer);
-        }
-        else {
-            activePlayer += 1;
-            UpdateActivePlayer(activePlayer);
-        }
-        _players[activePlayer].playerGameObject.transform.localScale = 2 * Vector3.one;
-        ColorUtility.TryParseHtmlString(color[activePlayer], out newCol);
-    }
 
     public static Player getActivePlayer() {
         return _players[activePlayer];
@@ -223,6 +206,23 @@ public class GameController : MonoBehaviour {
     public static void UpdateActivePlayer(int newPlayerNumber) {
         sendMessageToPlayer(updatePlayerMessage(newPlayerNumber - 1, false), newPlayerNumber - 1);
         sendMessageToPlayer(updatePlayerMessage(newPlayerNumber, true), newPlayerNumber);
+    }
+    
+    public static void UpdateActivePlayer() {
+        Debug.Log(activePlayer);
+        _players[activePlayer].playerGameObject.transform.localScale = Vector3.one;
+        if (activePlayer == AirConsole.instance.GetActivePlayerDeviceIds.Count - 1) {
+            Debug.Log("activePlayer to inactive ");
+            sendMessageToPlayer(updatePlayerMessage(activePlayer, false), activePlayer);
+            activePlayer = 0;
+            sendMessageToPlayer(updatePlayerMessage(activePlayer, true), activePlayer);
+        }
+        else {
+            activePlayer += 1;
+            UpdateActivePlayer(activePlayer);
+        }
+        _players[activePlayer].playerGameObject.transform.localScale = 2 * Vector3.one;
+        ColorUtility.TryParseHtmlString(color[activePlayer], out newCol);
     }
 
     public static void sendMessageToPlayer(object message, int playerNumber) {
