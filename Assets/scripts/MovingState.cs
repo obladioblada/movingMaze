@@ -13,10 +13,10 @@ public class MovingState : AbstractState {
         base.Enter();
         var playerPosition = GameController.getActivePlayer().playerGameObject.transform.position;
         var baseTile = GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == (Vector2) playerPosition);
-        baseTile.SetColor(Color.blue);
+        baseTile.SetColor(Color.gray);
         selectedTilePos = baseTile.gameObject.transform.position;
         GameController.gridManager.CalculatePath(GameController.getActivePlayer());
-        // todo Calculate paths from player position
+        baseTile.SetColor(Color.white);
     }
     
 
@@ -24,7 +24,9 @@ public class MovingState : AbstractState {
     {
         base.HandleInput();
         if (Input.GetKeyDown(InputController.INPUT_INSERT)) {
-           StateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
+            var onTile = GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos);
+            GameController.gridManager.MovePlayer(GameController.getActivePlayer(), onTile.gameObject.transform.position);
+            StateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
         }
 
         // todo handle movement around the grid of a player

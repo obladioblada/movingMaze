@@ -35,11 +35,9 @@ namespace grid {
             Debug.Log("wall type: " + type);
             var wall = type switch {
                 1 => new[] {false, true, false, true},
-                2 => new[] {true, true, false, true},
+                2 => new[] {true, true, false, true}, 
                 3 => new[] {true, true, false, false},
                 _ => null};
-            Debug.Log(wall.Length);
-            Debug.Log(wall[0] + "" + wall[1] + "" + wall[2] + "" + wall[3]);
             return wall;
         }
 
@@ -120,35 +118,41 @@ namespace grid {
 
         public void RotateSpareTile() {
             Debug.Log("rotating");
-            Quaternion rot = _spare.gameObject.transform.rotation;
             StartRotation();
-           // _spare.gameObject.transform.rotation = Quaternion.Lerp(rot, new Quaternion(rot.x, rot.y, rot.z + 90, rot.w), Time.time * 10);;
-            //_spare.gameObject.transform.Rotate(0, 0, 90);
         }
 
         private bool rotating;
         private bool shifting;
-        private IEnumerator Rotate( Vector3 angles, float duration )
-        {
-            rotating = true ;
+        private IEnumerator Rotate( Vector3 angles, float duration ) {
+            rotating = true;
             Quaternion startRotation = _spare.gameObject.transform.rotation ;
             Quaternion endRotation = Quaternion.Euler( angles ) * startRotation ;
+            
             for( float t = 0 ; t < duration ; t+= Time.deltaTime )
             {
                 _spare.gameObject.transform.rotation = Quaternion.Lerp( startRotation, endRotation, t / duration ) ;
                 yield return null;
             }
-            _spare.gameObject.transform.rotation = endRotation  ;
+            _spare.gameObject.transform.rotation = endRotation;
+            updateWall(_spare.wall, 1);
             rotating = false;
         }
- 
+
+        private void updateWall(bool[] wall, int times) {
+            for (var i = 0; i < times; i++) {
+                var lastSide = wall[_spare.wall.Length - 1];
+                Array.Copy(wall, 0, wall, 1, _spare.wall.Length - 1);
+                wall[0] = lastSide;
+            }
+        }
+
         public void StartRotation()
         {
             if(!rotating)
                 StartCoroutine(Rotate(new Vector3(
                     0,
                     0,
-                    90), 0.2f));
+                    -90), 0.2f));
         }
         
         
@@ -195,20 +199,27 @@ namespace grid {
                 }
                 for (var y = 0; y < N; y++) {
                     var go = SpawnTile(x, y);
+                    var wall = generateWall(3);
                     if ((x == 0 || x == N - 1) && (y == 0 || y == N - 1)) {
                         go.transform.rotation = new Quaternion(0, 0, 0, 0);
                         switch (x) {
                             case 0 when y == N - 1:
                                 go.transform.Rotate(0, 0, -90);
+                                updateWall(wall, 1);
                                 break;
                             case N - 1 when y == 0:
                                 go.transform.Rotate(0, 0, 90);
+                                updateWall(wall, 2);
                                 break;
                             case N - 1 when y == N - 1:
                                 go.transform.Rotate(0, 0, 180);
+                                updateWall(wall, 3);
                                 break;
                         }
-                        _tiles.Add(new Tile(x + y * 10, go, GetTilePathWithNumber(3), generateWall(3)));
+                        Debug.Log("tile at the angle: X-Y" + x + " - " + y);
+                        Debug.Log(go.transform.rotation);
+                        Debug.Log(wall[0] + "" + wall[1] + "" + wall[2] + "" + wall[3]);
+                        _tiles.Add(new Tile(x + y * 10, go, GetTilePathWithNumber(3), wall));
                     } else {
                         var tileId = Random.Range(1, 4);
                         var tilePath = GetTilePathWithNumber(tileId);
@@ -260,12 +271,9 @@ namespace grid {
 
         private GameObject SpawnTile(int x, int y) {
             var go = Instantiate(
-                tile,
-                gameObject.transform.position,
-                Quaternion.Euler(0, 0, Random.Range(0, 4) * 90),
-                transform);
+                tile, transform);
             go.transform.position = new Vector3(x, y, 0);
-            go.name = y + "," + x;
+            go.name = x + "," + y;
             return go;
         }
 
@@ -281,6 +289,10 @@ namespace grid {
             var wall = startingTile.wall;
             Debug.Log(wall[0] + "" + wall[1] + "" + wall[2] + "" + wall[3]);
             MatchPosition.MatchTile(startingTile, player.playerGameObject.transform.position);
+        }
+
+        public void MovePlayer(Player player, Vector2 pos) {
+            player.playerGameObject.transform.position = new Vector3(pos.x, pos.y, player.playerGameObject.transform.position.z);
         }
     }
 }
