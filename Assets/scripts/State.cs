@@ -20,7 +20,9 @@ public abstract class AbstractState {
     public virtual void Exit() {
     }
 
-    public virtual void HandleInput() {}
+    public virtual void HandleInput() {
+        if (Input.GetKeyDown(InputController.INPUT_PAUSE)) {stateMachine.ChangeState(GameController._states[State.STATE_MENU]);} 
+    }
     
 }
 

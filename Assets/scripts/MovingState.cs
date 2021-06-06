@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class MovingState : AbstractState {
     
-    private Vector2 selectedTilePos;
+    public Vector2 selectedTilePos;
     public MovingState(State name, StateMachine stateMachine) : base(name, stateMachine) {}
 
 
@@ -68,7 +68,7 @@ public class MovingState : AbstractState {
         }
     }
 
-    private void resetTileColor() {
+    public void resetTileColor() {
         var currentTile = GameController.gridManager._tiles.FirstOrDefault(t => (Vector2) t.gameObject.transform.position == selectedTilePos);
         if (currentTile == null) return;
         currentTile.SetColor(GameController.gridManager._allowdTilepaths.Contains(currentTile) ? Color.yellow : Color.white);
