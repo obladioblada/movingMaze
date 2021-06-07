@@ -197,22 +197,23 @@ namespace grid {
                         new Vector3(x, N, 1), Vector3.down, x);
                 }
                 for (var y = 0; y < N; y++) {
-                    var go = SpawnTile(x, y);
-                    var wall = generateWall(3);
+                    // create tiles player base
                     if ((x == 0 || x == N - 1) && (y == 0 || y == N - 1)) {
+                        var go = SpawnTile(x, y);
+                        var wall = generateWall(3);
                         go.transform.rotation = new Quaternion(0, 0, 0, 0);
                         switch (x) {
                             case 0 when y == N - 1:
-                                go.transform.Rotate(0, 0, -90);
+                                go.transform.Rotate(0, 0, 270);
                                 updateWall(wall, 1);
                                 break;
                             case N - 1 when y == 0:
                                 go.transform.Rotate(0, 0, 90);
-                                updateWall(wall, 2);
+                                updateWall(wall, 3);
                                 break;
                             case N - 1 when y == N - 1:
                                 go.transform.Rotate(0, 0, 180);
-                                updateWall(wall, 3);
+                                updateWall(wall, 2);
                                 break;
                         }
                         Debug.Log("tile at the angle: X-Y" + x + " - " + y);
@@ -220,14 +221,20 @@ namespace grid {
                         Debug.Log(wall[0] + "" + wall[1] + "" + wall[2] + "" + wall[3]);
                         _tiles.Add(new Tile(x + y * 10, go, GetTilePathWithNumber(3), wall));
                     } else {
+                        // create rest of the grid
                         var tileId = Random.Range(1, 4);
                         var tilePath = GetTilePathWithNumber(tileId);
+                        var go = SpawnTile(x, y);
+                        var rotationRandomId = Random.Range(0, 4);
+                        go.transform.Rotate(0, 0, rotationRandomId * -90); 
+                        var wall = generateWall(tileId);
+                        updateWall(wall, rotationRandomId);
                         GameObject t = null;
                         if (Random.Range(1, 10) < 3) {
                             t = Instantiate(treasure, go.transform.position, go.transform.rotation, go.transform);
                             t.GetComponent<Renderer>().material.color = Random.ColorHSV(0f, 1f, 1f, 1f, 0.5f, 1f);
                         }
-                        _tiles.Add( new Tile(x + y * 10, go, tilePath, generateWall(tileId),t));
+                        _tiles.Add( new Tile(x + y * 10, go, tilePath, wall,t));
                     }
                     // creating arrows right/left side
                     if (y % 2 == 1 && x == 0) {
