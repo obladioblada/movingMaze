@@ -48,7 +48,8 @@ public class MovingState : AbstractState {
         }
 
         if (Input.GetKeyDown(InputController.INPUT_RIGHT)) {
-            resetTileColor();            if ((int)selectedTilePos.x == GridManager.N - 1) selectedTilePos = new Vector2(0, selectedTilePos.y);
+            resetTileColor();           
+            if ((int)selectedTilePos.x == GridManager.N - 1) selectedTilePos = new Vector2(0, selectedTilePos.y);
             else selectedTilePos += Vector2.right;
             GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos).SetColor(Color.grey);
         }

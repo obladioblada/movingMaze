@@ -9,16 +9,15 @@ using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 public class GameController : MonoBehaviour {
-    
     static Color newCol;
     private const string RED = "#D32F2F";
     private const string YELLOW = "#F4D03F";
     private const string GREEN = "#4CAF50";
     private const string BLUE = "#3498DB";
-    
+
     // Use Dictionary as a map.
     static readonly Dictionary<int, string> color = new Dictionary<int, string>();
-    public static int activePlayer = - 1;
+    public static int activePlayer = -1;
     public static State activeState;
     public static List<Player> _players;
     public StateMachine stateMachine = new StateMachine();
@@ -29,7 +28,7 @@ public class GameController : MonoBehaviour {
     [SerializeField] public Text state_Text;
     [SerializeField] public Text active_player_Text;
     [SerializeField] public GameObject playerGO;
-    
+
     public GameObject gridGameObject;
     public static GridManager gridManager;
     private bool onPlayersReady;
@@ -37,7 +36,6 @@ public class GameController : MonoBehaviour {
     public static Player getActivePlayer() {
         return _players[activePlayer];
     }
-
 
 
     void Awake() {
@@ -48,12 +46,11 @@ public class GameController : MonoBehaviour {
         color.Add(1, YELLOW);
         color.Add(2, GREEN);
         color.Add(3, BLUE);
-        ColorUtility.TryParseHtmlString(color[0], out newCol) ;
+        ColorUtility.TryParseHtmlString(color[0], out newCol);
     }
 
     // Start is called before the first frame update
-    void Start()
-    {
+    void Start() {
         Debug.Log("Starting...");
         _states = new Dictionary<State, AbstractState> {
             {State.STATE_MENU, new MenuState(State.STATE_MENU, stateMachine)},
@@ -81,7 +78,7 @@ public class GameController : MonoBehaviour {
             }
         }
     }
-    
+
 
     void OnDisconnect(int deviceID) {
         Debug.Log("Device " + deviceID + " disconnected");
@@ -136,58 +133,74 @@ public class GameController : MonoBehaviour {
                     var movingState = (MovingState) _states[State.STATE_MOVE];
                     switch (action) {
                         case (int) InputController.INPUT_INSERT:
-                            var onTile = GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == movingState.selectedTilePos);
-                            if (GameController.gridManager._allowdTilepaths.Contains(onTile)) {
-                                GameController.gridManager.MovePlayer(GameController.getActivePlayer(), onTile.gameObject.transform.position);
+                            var onTile = gridManager._tiles.Find(t =>
+                                (Vector2) t.gameObject.transform.position == movingState.selectedTilePos);
+                            if (gridManager._allowdTilepaths.Contains(onTile)) {
+                                gridManager.MovePlayer(GameController.getActivePlayer(), onTile.gameObject.transform.position);
                                 stateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
                             }
+
                             break;
                         // todo handle movement around the grid of a player
                         case (int) InputController.INPUT_LEFT:
                             movingState.resetTileColor();
-                            if (movingState.selectedTilePos.x == 0)
+                            if (movingState.selectedTilePos.x == 0) {
                                 movingState.selectedTilePos = new Vector2(GridManager.N - 1, movingState.selectedTilePos.y);
-                            else movingState.selectedTilePos += Vector2.left;
-                            GameController.gridManager._tiles
-                                .Find(t => (Vector2) t.gameObject.transform.position == movingState.selectedTilePos).SetColor(Color.gray);
+                            }
+                            else {
+                                movingState.selectedTilePos += Vector2.left;
+                            }
+
+                            gridManager._tiles.
+                                Find(t => (Vector2) t.gameObject.transform.position == movingState.selectedTilePos).SetColor(Color.gray);
                             break;
                         case (int) InputController.INPUT_RIGHT:
                             movingState.resetTileColor();
-                            if ((int) movingState.selectedTilePos.x == GridManager.N - 1)
+                            if ((int) movingState.selectedTilePos.x == GridManager.N - 1) {
                                 movingState.selectedTilePos = new Vector2(0, movingState.selectedTilePos.y);
-                            else movingState.selectedTilePos += Vector2.right;
+                            }
+                            else {
+                                movingState.selectedTilePos += Vector2.right;
+                            }
+
                             GameController.gridManager._tiles
                                 .Find(t => (Vector2) t.gameObject.transform.position == movingState.selectedTilePos).SetColor(Color.grey);
                             break;
 
                         case (int) InputController.INPUT_UP:
                             movingState.resetTileColor();
-                            if ((int) movingState.selectedTilePos.y == GridManager.N - 1)
+                            if ((int) movingState.selectedTilePos.y == GridManager.N - 1) {
                                 movingState.selectedTilePos = new Vector2(movingState.selectedTilePos.x, 0);
-                            else movingState.selectedTilePos += Vector2.up;
-                            GameController.gridManager._tiles
+                            }
+                            else {
+                                movingState.selectedTilePos += Vector2.up;
+                            }
+                            gridManager._tiles
                                 .Find(t => (Vector2) t.gameObject.transform.position == movingState.selectedTilePos).SetColor(Color.grey);
                             break;
 
                         case (int) InputController.INPUT_DOWN:
                             movingState.resetTileColor();
-                            if ((int) movingState.selectedTilePos.y == 0)
+                            if ((int) movingState.selectedTilePos.y == 0) {
                                 movingState.selectedTilePos = new Vector2(movingState.selectedTilePos.x, GridManager.N - 1);
-                            else movingState.selectedTilePos += Vector2.down;
-                            GameController.gridManager._tiles
+                            }
+                            else {
+                                movingState.selectedTilePos += Vector2.down;
+                            }
+                            gridManager._tiles
                                 .Find(t => (Vector2) t.gameObject.transform.position == movingState.selectedTilePos).SetColor(Color.gray);
                             break;
                     }
+
                     break;
             }
         }
     }
 
-    private void OnDestroy()
-    {
+    private void OnDestroy() {
         if (AirConsole.instance != null) AirConsole.instance.onMessage -= OnMessage;
     }
-    
+
     public void StartGame() {
         Debug.Log("Starting game!!");
         try {
@@ -197,6 +210,7 @@ public class GameController : MonoBehaviour {
             Console.WriteLine(e);
             throw;
         }
+
         activePlayer = 0;
         initPlayers();
         ColorUtility.TryParseHtmlString(color[activePlayer], out newCol);
@@ -209,13 +223,15 @@ public class GameController : MonoBehaviour {
         for (var index = 0; index < AirConsole.instance.GetActivePlayerDeviceIds.Count; index++) {
             var c = color[index];
             var playerGOGameObject = initPlayerGameObject(index, c);
-            Debug.Log("PLAYERRRRR " + index );
+            Debug.Log("PLAYERRRRR " + index);
             Debug.Log(playerGOGameObject.transform.position);
-            var player = new Player(playerGOGameObject, AirConsole.instance.GetNickname(AirConsole.instance.ConvertPlayerNumberToDeviceId(index)), 
-                index, AirConsole.instance.ConvertPlayerNumberToDeviceId(0), index == 0 , c);
+            var player = new Player(playerGOGameObject,
+                AirConsole.instance.GetNickname(AirConsole.instance.ConvertPlayerNumberToDeviceId(index)),
+                index, AirConsole.instance.ConvertPlayerNumberToDeviceId(0), index == 0, c);
             _players.Add(player);
             sendMessageToPlayer(updatePlayerMessage(index, index == 0), index);
         }
+
         _players[activePlayer].playerGameObject.transform.localScale = 2 * Vector3.one;
     }
 
@@ -250,7 +266,7 @@ public class GameController : MonoBehaviour {
         sendMessageToPlayer(updatePlayerMessage(newPlayerNumber - 1, false), newPlayerNumber - 1);
         sendMessageToPlayer(updatePlayerMessage(newPlayerNumber, true), newPlayerNumber);
     }
-    
+
     public static void UpdateActivePlayer() {
         Debug.Log(activePlayer);
         _players[activePlayer].playerGameObject.transform.localScale = Vector3.one;
@@ -264,6 +280,7 @@ public class GameController : MonoBehaviour {
             activePlayer += 1;
             UpdateActivePlayer(activePlayer);
         }
+
         _players[activePlayer].playerGameObject.transform.localScale = 2 * Vector3.one;
         ColorUtility.TryParseHtmlString(color[activePlayer], out newCol);
     }

@@ -297,6 +297,7 @@ namespace grid {
             Debug.Log("on TILE " + startingTile.gameObject.transform.position);
             Debug.Log("with wall:");
             // todo get all possible connection from player position (startingTile)
+            _allowdTilepaths.Add(startingTile);
             recursiveExplorePlayerGrid(startingTile);
         }
 
