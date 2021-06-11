@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DG.Tweening;
 using grid;
 using UnityEngine;
 
@@ -32,8 +33,10 @@ public class MovingState : AbstractState {
         base.HandleInput();
         if (Input.GetKeyDown(InputController.INPUT_INSERT)) {
             var onTile = GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos);
-            if (GameController.gridManager._allowdTilepaths.Contains(onTile)) {
-                GameController.gridManager.MovePlayer(GameController.getActivePlayer(), onTile.gameObject.transform.position);
+            if (GameController.gridManager._allowdTilepaths.Contains(onTile) &&
+                !DOTween.IsTweening(GameController.getActivePlayer().playerGameObject.transform.gameObject.transform.transform)) {
+                GameController.getActivePlayer().playerGameObject.transform.DOMove(onTile.gameObject.transform.position, 1f);
+               //GameController.gridManager.MovePlayer(GameController.getActivePlayer(), onTile.gameObject.transform.position);
                 StateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
             }
         }

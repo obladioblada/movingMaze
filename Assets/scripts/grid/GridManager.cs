@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DG.Tweening;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
@@ -120,25 +121,13 @@ namespace grid {
 
         public void RotateSpareTile() {
             Debug.Log("rotating");
-            StartRotation();
-        }
-
-        private bool rotating;
-        private bool shifting;
-        private IEnumerator Rotate( Vector3 angles, float duration ) {
-            rotating = true;
-            Quaternion startRotation = _spare.gameObject.transform.rotation ;
-            Quaternion endRotation = Quaternion.Euler( angles ) * startRotation ;
-            
-            for( float t = 0 ; t < duration ; t+= Time.deltaTime )
-            {
-                _spare.gameObject.transform.rotation = Quaternion.Lerp( startRotation, endRotation, t / duration ) ;
-                yield return null;
-            }
-            _spare.gameObject.transform.rotation = endRotation;
+            // always prevent concurrent animations
+            if (DOTween.IsTweening(_spare.gameObject.transform.transform)) return;
+            _spare.gameObject.transform.DORotate(_spare.gameObject.transform.eulerAngles + new Vector3(0, 0, -90), 0.5f);
             updateWall(_spare.wall, 1);
-            rotating = false;
         }
+        
+        private bool shifting;
 
         private void updateWall(bool[] wall, int times) {
             for (var i = 0; i < times; i++) {
@@ -148,16 +137,6 @@ namespace grid {
             }
         }
 
-        public void StartRotation()
-        {
-            if(!rotating)
-                StartCoroutine(Rotate(new Vector3(
-                    0,
-                    0,
-                    -90), 0.1f));
-        }
-        
-        
         private IEnumerator Shift( GameObject  go, Vector3 direction, float duration, bool newPosition )
         {
             Vector3 startPosition = go.transform.position ;
