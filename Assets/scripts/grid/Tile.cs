@@ -11,6 +11,7 @@ namespace grid
         public readonly GameObject treasure;
         public readonly bool[] wall;
         public bool explored;
+        public int weight;
 
         public Tile(int id, GameObject go, string tilePath, bool[] wall, GameObject treasure = null) {
             _id = id;
@@ -19,6 +20,7 @@ namespace grid
             this.treasure = treasure;
             this.wall = wall;
             explored = false;
+            weight = 0;
         }
 
         public void SetColor(Color color) {

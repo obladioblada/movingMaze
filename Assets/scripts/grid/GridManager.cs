@@ -15,7 +15,7 @@ namespace grid {
         [SerializeField] private GameObject allowMoving;
         [SerializeField] private GameObject treasure;
         public List<Tile> _tiles;
-        public List<Tile> _allowdTilepaths;
+        public List<Tile> _allowedTilePath;
         public Arrow[] _arrows;
         public int _selectedArrowIndex;
         private int _oppositeSelectedArrowIndex;
@@ -57,7 +57,7 @@ namespace grid {
 
         private void Awake() {
             _tiles = new List<Tile>();
-            _allowdTilepaths = new List<Tile>();
+            _allowedTilePath = new List<Tile>();
             _arrows = new Arrow[N / 2 * 4]; 
              tile.transform.parent = transform;
             _spare = new Tile(-1, tile, GetTilePathWithNumber(1), generateWall(1));
@@ -68,54 +68,52 @@ namespace grid {
             _arrows[_selectedArrowIndex].SetColor(Color.yellow);
             _isFirstTurn = true;
         }
-        public bool InsertTile() {
+        public void InsertTile() {
             if (_oppositeSelectedArrowIndex == _selectedArrowIndex && !_isFirstTurn) {
                 Debug.Log("Can't do this because it would revert last change");
                 _arrows[_selectedArrowIndex].SetColor(Color.red);
-                return false;
             }
             _isFirstTurn = false;
             _arrows[_oppositeSelectedArrowIndex].SetColor(Color.grey);
             // get the opposite arrow index before assigning new one to prevent reverting last action
             _oppositeSelectedArrowIndex = _selectedArrowIndex % 2 == 0 ? _selectedArrowIndex + 1 : _selectedArrowIndex - 1;
             ShiftTiles( _arrows[_selectedArrowIndex].index,  _arrows[_selectedArrowIndex].axes,  _arrows[_selectedArrowIndex].direction);
-            return true;
         }
 
         public void MoveArrowRight() {
             if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.left)) return;
             if (_selectedArrowIndex ==  MatchPosition.ARROW_NE)   GetArrowAtIndex(MatchPosition.ARROW_EN);
             else if (_selectedArrowIndex == MatchPosition.ARROW_SE) GetArrowAtIndex(MatchPosition.ARROW_ES);
-            else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Vertically)) ShiftArrow(MatchPosition.ShiftUpOrRight);
-            else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Horizontally)) ShiftArrow(MatchPosition.shiftOppositeRightOrUp);
+            else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Vertically)) SelectShiftArrowAtIndex(MatchPosition.ShiftUpOrRight);
+            else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Horizontally)) SelectShiftArrowAtIndex(MatchPosition.shiftOppositeRightOrUp);
         }
 
         public void MoveArrowLeft() {
             if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.right)) return;
             if (_selectedArrowIndex == MatchPosition.ARROW_NW) GetArrowAtIndex(MatchPosition.ARROW_WN);
             else if (_selectedArrowIndex == MatchPosition.ARROW_SW) GetArrowAtIndex(MatchPosition.ARROW_WS);
-            else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Vertically)) ShiftArrow(MatchPosition.ShiftDownOrLeft);
-            else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Horizontally)) ShiftArrow(MatchPosition.shiftOppositeLeftOrDown);
+            else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Vertically)) SelectShiftArrowAtIndex(MatchPosition.ShiftDownOrLeft);
+            else if ( _arrows[_selectedArrowIndex].axes.Equals(ShiftAxis.Horizontally)) SelectShiftArrowAtIndex(MatchPosition.shiftOppositeLeftOrDown);
         }
         
         public void MoveArrowUp() {
             if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.down)) return;
             if (_selectedArrowIndex == MatchPosition.ARROW_WN) GetArrowAtIndex(MatchPosition.ARROW_NW);
             else if (_selectedArrowIndex == MatchPosition.ARROW_EN) GetArrowAtIndex(MatchPosition.ARROW_NE);
-            else if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.up)) ShiftArrow(MatchPosition.shiftOppositeRightOrUp);
-            else ShiftArrow(MatchPosition.ShiftUpOrRight);
+            else if ( _arrows[_selectedArrowIndex].direction.Equals(Vector3.up)) SelectShiftArrowAtIndex(MatchPosition.shiftOppositeRightOrUp);
+            else SelectShiftArrowAtIndex(MatchPosition.ShiftUpOrRight);
         }
         
         public void MoveArrowDown() {
             if ( _arrows[_selectedArrowIndex].direction == Vector3.up) return;
             if (_selectedArrowIndex == MatchPosition.ARROW_WS) GetArrowAtIndex(MatchPosition.ARROW_SW);
             else if (_selectedArrowIndex == MatchPosition.ARROW_ES) GetArrowAtIndex(MatchPosition.ARROW_SE);
-            else if ( _arrows[_selectedArrowIndex].direction == Vector3.down) ShiftArrow(MatchPosition.shiftOppositeLeftOrDown);
-            else ShiftArrow(MatchPosition.ShiftDownOrLeft);
+            else if ( _arrows[_selectedArrowIndex].direction == Vector3.down) SelectShiftArrowAtIndex(MatchPosition.shiftOppositeLeftOrDown);
+            else SelectShiftArrowAtIndex(MatchPosition.ShiftDownOrLeft);
         }
         
         
-        private void ShiftArrow(int offset) {
+        private void SelectShiftArrowAtIndex(int offset) {
             GetArrowAtIndex(_selectedArrowIndex + offset);
         }
 
@@ -126,8 +124,6 @@ namespace grid {
             _spare.gameObject.transform.DORotate(_spare.gameObject.transform.eulerAngles + new Vector3(0, 0, -90), 0.5f);
             updateWall(_spare.wall, 1);
         }
-        
-        private bool shifting;
 
         private void updateWall(bool[] wall, int times) {
             for (var i = 0; i < times; i++) {
@@ -136,24 +132,18 @@ namespace grid {
                 wall[0] = lastSide;
             }
         }
-
-        private IEnumerator Shift( GameObject  go, Vector3 direction, float duration, bool newPosition )
-        {
-            Vector3 startPosition = go.transform.position ;
-            Vector3 endPosition = newPosition ? direction : startPosition + direction;
-            for( float t = 0 ; t < duration ; t+= Time.deltaTime )
-            {
-                go.transform.position = Vector3.Lerp( startPosition, endPosition, t / duration ) ;
-                yield return null;
-            }
-            go.transform.position = endPosition;
-            yield return new WaitForSeconds(0.3f);
-            CalculatePath(GameController.getActivePlayer());
-        }
+        
  
-        public void StartShift(GameObject go, Vector3  direction, bool newPos)
+        private IEnumerator StartShift(GameObject go, Vector3  direction, bool newPosition, bool calculatePath)
         {
-            StartCoroutine(Shift(go, direction, 0.1f, newPos));
+            var endPosition = newPosition ? direction : go.transform.position + direction;
+            var myTween = go.transform.DOMove(endPosition, 0.3f);
+            yield return myTween.WaitForCompletion();
+            // This log will happen after the tween has completed
+            Debug.Log("Tween completed!");
+            if (calculatePath) { 
+                GameController.gridManager.CalculatePath(GameController.getActivePlayer());
+            }
         }
         
         // swap color and   
@@ -243,12 +233,11 @@ namespace grid {
             }
 
             foreach (var t in _tiles.Where(x => axis == ShiftAxis.Horizontally ? x.IsAtRow(index) : x.IsAtColumn(index))) {
-                if ((Vector2) GameController.getActivePlayer().playerGameObject.transform.position ==
-                    (Vector2) t.gameObject.transform.position) {
-                    Debug.Log("player on the way! moving");
-                    StartShift(GameController.getActivePlayer().playerGameObject, direction, false);
+                if ((Vector2) GameController.getActivePlayer().playerGameObject.transform.position == (Vector2) t.gameObject.transform.position) {
+                    StartCoroutine(StartShift(GameController.getActivePlayer().playerGameObject, direction, false, false));
                 }
-                StartShift(t.gameObject, direction, false);
+
+                StartCoroutine(StartShift(t.gameObject, direction, false, true));
             }
         }
 
@@ -275,8 +264,7 @@ namespace grid {
             Debug.Log(startingTile);
             Debug.Log("on TILE " + startingTile.gameObject.transform.position);
             Debug.Log("with wall:");
-            // todo get all possible connection from player position (startingTile)
-            _allowdTilepaths.Add(startingTile);
+            _allowedTilePath.Add(startingTile);
             recursiveExplorePlayerGrid(startingTile);
         }
 
@@ -284,8 +272,8 @@ namespace grid {
             if (startingTile.explored) return;
             startingTile.explored = true;
             startingTile.SetColor(Color.yellow);
-            Vector2[] dir = new[] {Vector2.up, Vector2.right, Vector2.down, Vector2.left};
-            int[] TileToCheckDir = new[] {2, 3, 0, 1}; // SWNE
+            Vector2[] dir = {Vector2.up, Vector2.right, Vector2.down, Vector2.left};
+            int[] TileToCheckDir = {2, 3, 0, 1}; // SWNE
             Vector2 startingTilePos = startingTile.gameObject.transform.position;
             // i = direction NESW
             Debug.Log("starting checking adjacent tiles"); 
@@ -294,10 +282,8 @@ namespace grid {
                 var nextTileToCheck = _tiles.FirstOrDefault(t => (Vector2) t.gameObject.transform.position == startingTilePos + dir[i]);
                 //check if path on i direction 
                 if (startingTile.wall[i] && nextTileToCheck != null && nextTileToCheck.wall[TileToCheckDir[i]]) {
-                    Debug.Log("find adjacent tile where I can go!"); 
-                    Debug.Log(nextTileToCheck.gameObject.transform.position); 
-                    // there is connection between starting path and nextTileToCheck, will save it in the array of possible Paths
-                    _allowdTilepaths.Add(nextTileToCheck);
+                    // there is connection between starting Tile and nextTileToCheck
+                    _allowedTilePath.Add(nextTileToCheck);
                     recursiveExplorePlayerGrid(nextTileToCheck);
                 }
             }

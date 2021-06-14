@@ -121,10 +121,8 @@ public class GameController : MonoBehaviour {
                             gridManager.RotateSpareTile();
                             break;
                         case (int) InputController.INPUT_INSERT:
-                            if (gridManager.InsertTile()) {
-                                stateMachine.ChangeState(_states[State.STATE_MOVE]);
-                            }
-
+                            gridManager.InsertTile();
+                            stateMachine.ChangeState(_states[State.STATE_MOVE]);
                             break;
                     }
 
@@ -135,7 +133,7 @@ public class GameController : MonoBehaviour {
                         case (int) InputController.INPUT_INSERT:
                             var onTile = gridManager._tiles.Find(t =>
                                 (Vector2) t.gameObject.transform.position == movingState.selectedTilePos);
-                            if (gridManager._allowdTilepaths.Contains(onTile)) {
+                            if (gridManager._allowedTilePath.Contains(onTile)) {
                                 gridManager.MovePlayer(GameController.getActivePlayer(), onTile.gameObject.transform.position);
                                 stateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
                             }

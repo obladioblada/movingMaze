@@ -19,16 +19,31 @@ public class ShiftingState : AbstractState {
     public override void HandleInput()
     {
         base.HandleInput();
-        if (Input.GetKeyDown(InputController.INPUT_LEFT)) {GameController.gridManager.MoveArrowLeft();}
-        if (Input.GetKeyDown(InputController.INPUT_RIGHT)) {GameController.gridManager.MoveArrowRight();}
-        if (Input.GetKeyDown(InputController.INPUT_UP)) {GameController.gridManager.MoveArrowUp();}
-        if (Input.GetKeyDown(InputController.INPUT_DOWN)) {GameController.gridManager.MoveArrowDown();}
-        if (Input.GetKeyDown(InputController.INPUT_ROTATE)) {GameController.gridManager.RotateSpareTile();};
+        if (Input.GetKeyDown(InputController.INPUT_LEFT)) {
+            GameController.gridManager.MoveArrowLeft();
+        }
+
+        if (Input.GetKeyDown(InputController.INPUT_RIGHT)) {
+            GameController.gridManager.MoveArrowRight();
+        }
+
+        if (Input.GetKeyDown(InputController.INPUT_UP)) {
+            GameController.gridManager.MoveArrowUp();
+        }
+
+        if (Input.GetKeyDown(InputController.INPUT_DOWN)) {
+            GameController.gridManager.MoveArrowDown();
+        }
+
+        if (Input.GetKeyDown(InputController.INPUT_ROTATE)) {
+            GameController.gridManager.RotateSpareTile();
+        }
+
         if (Input.GetKeyDown(InputController.INPUT_INSERT)) {
-            if (GameController.gridManager.InsertTile()) {
-                StateMachine.ChangeState(GameController._states[State.STATE_MOVE]);
-            }
-        };
+            GameController.gridManager.InsertTile();
+            StateMachine.ChangeState(GameController._states[State.STATE_MOVE]);
+        }
+        
     }
 
     public override void Exit() {

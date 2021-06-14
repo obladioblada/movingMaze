@@ -20,11 +20,12 @@ public class MovingState : AbstractState {
     }
 
     private void clearTilePath() {
-        foreach (var tile in GameController.gridManager._allowdTilepaths) {
+        foreach (var tile in GameController.gridManager._allowedTilePath) {
             tile.explored = false;
             tile.SetColor(Color.white);
+            tile.weight = 0;
         }
-        GameController.gridManager._allowdTilepaths.Clear();
+        GameController.gridManager._allowedTilePath.Clear();
     }
     
 
@@ -32,11 +33,17 @@ public class MovingState : AbstractState {
     {
         base.HandleInput();
         if (Input.GetKeyDown(InputController.INPUT_INSERT)) {
-            var onTile = GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos);
-            if (GameController.gridManager._allowdTilepaths.Contains(onTile) &&
-                !DOTween.IsTweening(GameController.getActivePlayer().playerGameObject.transform.gameObject.transform.transform)) {
-                GameController.getActivePlayer().playerGameObject.transform.DOMove(onTile.gameObject.transform.position, 1f);
-               //GameController.gridManager.MovePlayer(GameController.getActivePlayer(), onTile.gameObject.transform.position);
+            var targetTile = GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos);
+            if (GameController.gridManager._allowedTilePath.Contains(targetTile) &&
+                !DOTween.IsTweening(GameController.getActivePlayer().playerGameObject.transform)) {
+                //todo pathfinding to find shortest route to selected tile
+                var playerTile = GameController.gridManager._tiles
+                    .Find(t => (Vector2) t.gameObject.transform.position == 
+                               (Vector2)GameController.getActivePlayer().playerGameObject.transform.position);
+                if (targetTile != playerTile ) {
+                    //have to move --> get shortest path to get to target
+                   
+                }
                 StateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
             }
         }
@@ -47,7 +54,6 @@ public class MovingState : AbstractState {
             if (selectedTilePos.x == 0) selectedTilePos = new Vector2(GridManager.N - 1, selectedTilePos.y);
             else selectedTilePos += Vector2.left;
             GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position ==  selectedTilePos).SetColor(Color.gray);
-
         }
 
         if (Input.GetKeyDown(InputController.INPUT_RIGHT)) {
@@ -75,7 +81,7 @@ public class MovingState : AbstractState {
     public void resetTileColor() {
         var currentTile = GameController.gridManager._tiles.FirstOrDefault(t => (Vector2) t.gameObject.transform.position == selectedTilePos);
         if (currentTile == null) return;
-        currentTile.SetColor(GameController.gridManager._allowdTilepaths.Contains(currentTile) ? Color.yellow : Color.white);
+        currentTile.SetColor(GameController.gridManager._allowedTilePath.Contains(currentTile) ? Color.yellow : Color.white);
     }
 
     public override void Exit() {
