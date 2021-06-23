@@ -1,9 +1,12 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
 using grid;
 using UnityEngine;
+using UnityEngine.Tilemaps;
+using Tile = grid.Tile;
 
 public class MovingState : AbstractState {
     
@@ -23,11 +26,20 @@ public class MovingState : AbstractState {
         foreach (var tile in GameController.gridManager._allowedTilePath) {
             tile.explored = false;
             tile.SetColor(Color.white);
-            tile.weight = 0;
+            tile.weight = int.MaxValue;
+            tile.connectedTile = null;
         }
         GameController.gridManager._allowedTilePath.Clear();
     }
-    
+
+    private void getPath(ICollection<Tile> path, Tile tile) {
+        path.Add(tile);
+        if (tile.weight == 0 || tile.connectedTile == null) {
+            return;
+        }
+        getPath(path, tile.connectedTile);
+    }
+
 
     public override void HandleInput()
     {
@@ -40,9 +52,31 @@ public class MovingState : AbstractState {
                 var playerTile = GameController.gridManager._tiles
                     .Find(t => (Vector2) t.gameObject.transform.position == 
                                (Vector2)GameController.getActivePlayer().playerGameObject.transform.position);
-                if (targetTile != playerTile ) {
-                    //have to move --> get shortest path to get to target
-                   
+                Debug.Log("player tile with weight = " + playerTile.weight);
+                Debug.Log("target tile with weight = " + targetTile.weight);
+                Debug.Log("connected tile with weight = " + targetTile.connectedTile.weight);
+                if (targetTile != playerTile) {
+                    var candidateTiles = GameController.gridManager._allowedTilePath
+                        .FindAll(tile => tile.weight <= targetTile.weight && tile.connectedTile != null);
+                    List<Tile> path = new List<Tile>();
+                    getPath(path, targetTile);
+                    if (path.Count > 0) {
+                        Debug.Log("path L:" + path.Count);
+                        foreach (var p in path) {
+                            Debug.Log(p.gameObject.transform.position);
+                        }
+                        var vectorPath = path.OrderBy(tile => tile.weight).Select(tile => {
+                            var tilePos = tile.gameObject.transform.position;
+                            return new Vector3(tilePos.x, tilePos.y,
+                                GameController.getActivePlayer().playerGameObject.transform.position.z);
+                        });
+                        var array =  vectorPath.ToArray();
+                        foreach (var vector3 in array) {
+                            Debug.Log(vector3);
+                        }
+                        GameController.getActivePlayer().playerGameObject.transform.DOPath(array.ToArray(),
+                            1f, PathType.CatmullRom).SetEase(Ease.InBounce);
+                    }
                 }
                 StateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
             }

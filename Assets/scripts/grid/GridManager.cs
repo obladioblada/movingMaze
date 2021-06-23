@@ -77,7 +77,7 @@ namespace grid {
             _arrows[_oppositeSelectedArrowIndex].SetColor(Color.grey);
             // get the opposite arrow index before assigning new one to prevent reverting last action
             _oppositeSelectedArrowIndex = _selectedArrowIndex % 2 == 0 ? _selectedArrowIndex + 1 : _selectedArrowIndex - 1;
-            ShiftTiles( _arrows[_selectedArrowIndex].index,  _arrows[_selectedArrowIndex].axes,  _arrows[_selectedArrowIndex].direction);
+            ShiftTiles( _arrows[_selectedArrowIndex].index, _arrows[_selectedArrowIndex].axes, _arrows[_selectedArrowIndex].direction);
         }
 
         public void MoveArrowRight() {
@@ -132,20 +132,7 @@ namespace grid {
                 wall[0] = lastSide;
             }
         }
-        
- 
-        private IEnumerator StartShift(GameObject go, Vector3  direction, bool newPosition, bool calculatePath)
-        {
-            var endPosition = newPosition ? direction : go.transform.position + direction;
-            var myTween = go.transform.DOMove(endPosition, 0.3f);
-            yield return myTween.WaitForCompletion();
-            // This log will happen after the tween has completed
-            Debug.Log("Tween completed!");
-            if (calculatePath) { 
-                GameController.gridManager.CalculatePath(GameController.getActivePlayer());
-            }
-        }
-        
+
         // swap color and   
         private void GetArrowAtIndex(int arrowIndex) {
             _arrows[_selectedArrowIndex].SetColor(Color.gray);
@@ -221,25 +208,26 @@ namespace grid {
         
         private void ShiftTiles(int index, ShiftAxis axis, Vector3 direction) {
             if (index % 2 != 1) return;
+            var shiftSequence = DOTween.Sequence();
             if (axis == ShiftAxis.Horizontally) {
                 var leftOver = _tiles.First(t =>
                     direction == Vector3.right ? MatchPosition.LastInRow(t, index) : MatchPosition.FirstInRow(t, index));
                 SwapTiles(leftOver, direction == Vector3.right ? MatchPosition.BeforeFirstInRow(index) : MatchPosition.AfterLastInRow(index));
-            }
-            else {
+            } else {
                 var leftOver = _tiles.First(t =>
                     direction == Vector3.up ? MatchPosition.LastInColumn(t, index) : MatchPosition.FirstInColumn(t, index));
                 SwapTiles(leftOver, direction == Vector3.up ? MatchPosition.BeforeFirstInColumn(index) : MatchPosition.AfterLastInColumn(index));
             }
-
             foreach (var t in _tiles.Where(x => axis == ShiftAxis.Horizontally ? x.IsAtRow(index) : x.IsAtColumn(index))) {
+                var endPosition =  t.gameObject.transform.position + direction;
                 if ((Vector2) GameController.getActivePlayer().playerGameObject.transform.position == (Vector2) t.gameObject.transform.position) {
-                    StartCoroutine(StartShift(GameController.getActivePlayer().playerGameObject, direction, false, false));
+                    shiftSequence.Append(GameController.getActivePlayer().playerGameObject.transform.DOMove(endPosition, 0.05f));
                 }
-
-                StartCoroutine(StartShift(t.gameObject, direction, false, true));
+                shiftSequence.Append(t.gameObject.transform.DOMove(endPosition, 0.05f));
             }
+            shiftSequence.OnComplete(CalculatePath);
         }
+        
 
         private void SwapTiles(Tile newSpare, Vector2 oldSparePosition) {
             newSpare.gameObject.transform.position = _spare.gameObject.transform.position;
@@ -255,7 +243,8 @@ namespace grid {
             return go;
         }
 
-        public void CalculatePath(Player player) {
+        void CalculatePath() {
+            var player = GameController.getActivePlayer();
             // todo take player position and go through the tiles to match paths
             Debug.Log("calculating path for player" + player.name);
             Debug.Log("POS: " + player.playerGameObject.transform.position);
@@ -264,11 +253,11 @@ namespace grid {
             Debug.Log(startingTile);
             Debug.Log("on TILE " + startingTile.gameObject.transform.position);
             Debug.Log("with wall:");
+            startingTile.weight = 0;
             _allowedTilePath.Add(startingTile);
-            recursiveExplorePlayerGrid(startingTile);
+            recursiveExplorePlayerGrid(startingTile, startingTile.weight + 1);
         }
-
-        private void recursiveExplorePlayerGrid(Tile startingTile) {
+        private void recursiveExplorePlayerGrid(Tile startingTile, int weight) {
             if (startingTile.explored) return;
             startingTile.explored = true;
             startingTile.SetColor(Color.yellow);
@@ -283,8 +272,14 @@ namespace grid {
                 //check if path on i direction 
                 if (startingTile.wall[i] && nextTileToCheck != null && nextTileToCheck.wall[TileToCheckDir[i]]) {
                     // there is connection between starting Tile and nextTileToCheck
+                    if (nextTileToCheck.weight > weight) {
+                        Debug.Log("setting W:" + weight); 
+                        Debug.Log("for:" + nextTileToCheck.gameObject.transform.position); 
+                        nextTileToCheck.weight = weight;
+                        nextTileToCheck.connectedTile = startingTile;
+                    }
                     _allowedTilePath.Add(nextTileToCheck);
-                    recursiveExplorePlayerGrid(nextTileToCheck);
+                    recursiveExplorePlayerGrid(nextTileToCheck, nextTileToCheck.weight + 1);
                 }
             }
         }
