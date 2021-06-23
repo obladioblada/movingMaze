@@ -220,14 +220,28 @@ namespace grid {
             }
             foreach (var t in _tiles.Where(x => axis == ShiftAxis.Horizontally ? x.IsAtRow(index) : x.IsAtColumn(index))) {
                 var endPosition =  t.gameObject.transform.position + direction;
-                if ((Vector2) GameController.getActivePlayer().playerGameObject.transform.position == (Vector2) t.gameObject.transform.position) {
-                    shiftSequence.Append(GameController.getActivePlayer().playerGameObject.transform.DOMove(endPosition, 0.05f));
+                var playerPos = GameController.getActivePlayer().playerGameObject.transform.position;
+                checkIfPlayerObjectShifts();
+                if ((Vector2) playerPos == (Vector2) t.gameObject.transform.position) {
+                    var newPlayerPos = new Vector3(endPosition.x, endPosition.y, playerPos.z );
+                    if (axis == ShiftAxis.Vertically) {
+                        newPlayerPos.y = newPlayerPos.y < 0 ? N - 1 : newPlayerPos.y >= N ? 0 : newPlayerPos.y;
+                    }
+                    else {
+                        newPlayerPos.x = newPlayerPos.x < 0 ? N - 1 : newPlayerPos.x >= N ? 0 : newPlayerPos.x;
+                    }
+                    shiftSequence.Join(GameController.getActivePlayer().playerGameObject.transform.DOMove(newPlayerPos , 0.05f));
                 }
                 shiftSequence.Append(t.gameObject.transform.DOMove(endPosition, 0.05f));
             }
             shiftSequence.OnComplete(CalculatePath);
         }
-        
+
+        private void checkIfPlayerObjectShifts() {
+            foreach (var player in GameController._players) {
+                
+            }
+        }
 
         private void SwapTiles(Tile newSpare, Vector2 oldSparePosition) {
             newSpare.gameObject.transform.position = _spare.gameObject.transform.position;
