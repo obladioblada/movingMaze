@@ -51,13 +51,11 @@ public class MovingState : AbstractState {
                 var playerTile = GameController.gridManager._tiles
                     .Find(t => (Vector2) t.gameObject.transform.position ==
                                (Vector2) GameController.getActivePlayer().playerGameObject.transform.position);
-                Debug.Log("player tile with weight = " + playerTile.weight);
-                Debug.Log("target tile with weight = " + targetTile.weight);
-                Debug.Log("connected tile with weight = " + targetTile.connectedTile.weight);
                 if (targetTile != playerTile) {
-                    var candidateTiles = GameController.gridManager._allowedTilePath
-                        .FindAll(tile => tile.weight <= targetTile.weight && tile.connectedTile != null);
-                    List<Tile> path = new List<Tile>();
+                    Debug.Log("player tile with weight = " + playerTile.weight);
+                    Debug.Log("target tile with weight = " + targetTile.weight);
+                    Debug.Log("connected tile with weight = " + targetTile.connectedTile.weight);
+                    var path = new List<Tile>();
                     getPath(path, targetTile);
                     if (path.Count > 0) {
                         var vectorPath = path.OrderBy(tile => tile.weight).Select(tile => {
