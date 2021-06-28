@@ -77,7 +77,7 @@ namespace grid {
             _arrows[_oppositeSelectedArrowIndex].SetColor(Color.grey);
             // get the opposite arrow index before assigning new one to prevent reverting last action
             _oppositeSelectedArrowIndex = _selectedArrowIndex % 2 == 0 ? _selectedArrowIndex + 1 : _selectedArrowIndex - 1;
-            ShiftTiles( _arrows[_selectedArrowIndex].index, _arrows[_selectedArrowIndex].axes, _arrows[_selectedArrowIndex].direction);
+            ShiftTiles(_arrows[_selectedArrowIndex].index, _arrows[_selectedArrowIndex].axes, _arrows[_selectedArrowIndex].direction);
         }
 
         public void MoveArrowRight() {
@@ -209,44 +209,56 @@ namespace grid {
         private void ShiftTiles(int index, ShiftAxis axis, Vector3 direction) {
             if (index % 2 != 1) return;
             var shiftSequence = DOTween.Sequence();
-            if (axis == ShiftAxis.Horizontally) {
-                var leftOver = _tiles.First(t =>
-                    direction == Vector3.right ? MatchPosition.LastInRow(t, index) : MatchPosition.FirstInRow(t, index));
-                SwapTiles(leftOver, direction == Vector3.right ? MatchPosition.BeforeFirstInRow(index) : MatchPosition.AfterLastInRow(index));
-            } else {
-                var leftOver = _tiles.First(t =>
-                    direction == Vector3.up ? MatchPosition.LastInColumn(t, index) : MatchPosition.FirstInColumn(t, index));
-                SwapTiles(leftOver, direction == Vector3.up ? MatchPosition.BeforeFirstInColumn(index) : MatchPosition.AfterLastInColumn(index));
-            }
             foreach (var t in _tiles.Where(x => axis == ShiftAxis.Horizontally ? x.IsAtRow(index) : x.IsAtColumn(index))) {
                 var endPosition =  t.gameObject.transform.position + direction;
-                var playerPos = GameController.getActivePlayer().playerGameObject.transform.position;
-                checkIfPlayerObjectShifts();
-                if ((Vector2) playerPos == (Vector2) t.gameObject.transform.position) {
-                    var newPlayerPos = new Vector3(endPosition.x, endPosition.y, playerPos.z );
-                    if (axis == ShiftAxis.Vertically) {
-                        newPlayerPos.y = newPlayerPos.y < 0 ? N - 1 : newPlayerPos.y >= N ? 0 : newPlayerPos.y;
-                    }
-                    else {
-                        newPlayerPos.x = newPlayerPos.x < 0 ? N - 1 : newPlayerPos.x >= N ? 0 : newPlayerPos.x;
-                    }
-                    shiftSequence.Join(GameController.getActivePlayer().playerGameObject.transform.DOMove(newPlayerPos , 0.05f));
-                }
+                checkIfPlayerObjectShifts(t, endPosition);
                 shiftSequence.Append(t.gameObject.transform.DOMove(endPosition, 0.05f));
             }
-            shiftSequence.OnComplete(CalculatePath);
+            shiftSequence.OnComplete(() => {
+                if (axis == ShiftAxis.Horizontally) {
+                    var leftOver = _tiles.First(t =>
+                        direction == Vector3.right ? MatchPosition.LastInRow(t, index) : MatchPosition.FirstInRow(t, index));
+                    Debug.Log(leftOver);
+                    SwapTiles(leftOver, direction == Vector3.right ? MatchPosition.BeforeFirstInRow(index) : MatchPosition.AfterLastInRow(index));
+                }
+                else {
+                    var leftOver = _tiles.First(t =>
+                        direction == Vector3.up ? MatchPosition.LastInColumn(t, index) : MatchPosition.FirstInColumn(t, index));
+                    Debug.Log(leftOver);
+                    SwapTiles(leftOver, direction == Vector3.up ? MatchPosition.BeforeFirstInColumn(index) : MatchPosition.AfterLastInColumn(index));
+                }
+            });
         }
 
-        private void checkIfPlayerObjectShifts() {
+        private void checkIfPlayerObjectShifts(Tile t, Vector3 endPosition) {
             foreach (var player in GameController._players) {
-                
+                var playerPos = player.playerGameObject.transform.position;
+                if ((Vector2) playerPos != (Vector2) t.gameObject.transform.position) continue;
+                Debug.Log("OK I SHOULD MOVE PLAYER NOW");
+                var newPlayerPos = new Vector3(endPosition.x, endPosition.y, playerPos.z);
+                if (newPlayerPos.x >= N) {
+                    newPlayerPos.x = 0;
+                } else if (newPlayerPos.x < 0){
+                    newPlayerPos.x = N -1 ;
+                }
+                if (newPlayerPos.y >= N) {
+                    newPlayerPos.y = 0;
+                } else if (newPlayerPos.y < 0){
+                    newPlayerPos.y = N -1 ;
+                }
+                DOTween.Sequence()
+                    .Append(player.playerGameObject.transform.DOMove(newPlayerPos, 0.05f));
             }
         }
 
         private void SwapTiles(Tile newSpare, Vector2 oldSparePosition) {
-            newSpare.gameObject.transform.position = _spare.gameObject.transform.position;
-            _spare.gameObject.transform.position = oldSparePosition;
-            _spare = newSpare;
+            var swapSequence = DOTween.Sequence();
+            swapSequence.Append(newSpare.gameObject.transform.DOMove(_spare.gameObject.transform.position, 0.5f));
+            swapSequence.Append(_spare.gameObject.transform.DOMove(oldSparePosition, 0.5f));
+            swapSequence.OnComplete(() => {
+                _spare = newSpare;
+                CalculatePath();
+            });
         }
 
         private GameObject SpawnTile(int x, int y) {
