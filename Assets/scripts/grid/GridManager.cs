@@ -21,7 +21,7 @@ namespace grid {
         private int _oppositeSelectedArrowIndex;
         private Tile _spare;
         public bool _isFirstTurn;
-        
+
         // returns the specified tile or a random one otherwise
         private static string GetTilePathWithNumber(int id) {
             return  "Tiles/tile_" + id;
@@ -209,6 +209,9 @@ namespace grid {
         private void ShiftTiles(int index, ShiftAxis axis, Vector3 direction) {
             if (index % 2 != 1) return;
             var shiftSequence = DOTween.Sequence();
+            foreach (var t in _tiles.Where(x => axis == ShiftAxis.Horizontally ? !x.IsAtRow(index) : !x.IsAtColumn(index))) {
+               t.SetColor(Color.gray);
+            }
             foreach (var t in _tiles.Where(x => axis == ShiftAxis.Horizontally ? x.IsAtRow(index) : x.IsAtColumn(index))) {
                 var endPosition =  t.gameObject.transform.position + direction;
                 checkIfPlayerObjectShifts(t, endPosition);
@@ -256,6 +259,9 @@ namespace grid {
             swapSequence.Append(newSpare.gameObject.transform.DOMove(_spare.gameObject.transform.position, 0.5f));
             swapSequence.Append(_spare.gameObject.transform.DOMove(oldSparePosition, 0.5f));
             swapSequence.OnComplete(() => {
+                foreach (var t in _tiles) {
+                    t.SetColor(Color.white);
+                }
                 _spare = newSpare;
                 CalculatePath();
             });
@@ -302,7 +308,9 @@ namespace grid {
                         Debug.Log("setting W:" + weight); 
                         Debug.Log("for:" + nextTileToCheck.gameObject.transform.position); 
                         nextTileToCheck.weight = weight;
-                        nextTileToCheck.connectedTile = startingTile;
+                        if (nextTileToCheck.connectedTile == null || nextTileToCheck.connectedTile.weight > startingTile.weight) {
+                            nextTileToCheck.connectedTile = startingTile;
+                        }
                     }
                     _allowedTilePath.Add(nextTileToCheck);
                     recursiveExplorePlayerGrid(nextTileToCheck, nextTileToCheck.weight + 1);

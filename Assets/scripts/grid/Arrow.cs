@@ -1,3 +1,4 @@
+using DG.Tweening;
 using UnityEngine;
 
 namespace grid {
@@ -22,7 +23,7 @@ namespace grid {
         }
 
         public void SetColor(Color color) {
-            gameObject.GetComponent<SpriteRenderer>().color = color;
+            gameObject.GetComponent<SpriteRenderer>().DOColor(color, 0.4f);
         }
     }
 }

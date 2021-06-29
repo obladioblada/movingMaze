@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -26,7 +27,7 @@ namespace grid
         }
 
         public void SetColor(Color color) {
-            gameObject.GetComponent<SpriteRenderer>().color = color;
+            gameObject.GetComponent<SpriteRenderer>().DOColor(color, 0.4f) ;
         }
 
 

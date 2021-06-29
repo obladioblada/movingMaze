@@ -12,6 +12,8 @@ public class Player {
    private bool isActive;
    private string color;
 
+   public Stack<Card> cards;
+
    public Player(GameObject player, string name, int number, int deviceId, bool isActive, string color) {
       this.playerGameObject = player;
       this.name = name;
