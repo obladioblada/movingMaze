@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using DG.Tweening;
 using grid;
 using UnityEngine;
 using NDream.AirConsole;
@@ -20,6 +22,8 @@ public class GameController : MonoBehaviour {
     public static int activePlayer = -1;
     public static State activeState;
     public static List<Player> _players;
+    public static List<Card> _deck;
+    private const int cardsNumber = 24;
     public StateMachine stateMachine = new StateMachine();
     public static Dictionary<State, AbstractState> _states;
 
@@ -37,7 +41,15 @@ public class GameController : MonoBehaviour {
         return _players[activePlayer];
     }
 
-
+    private static void CreateDeck() {
+        for (var i = 1; i <= cardsNumber; i++) {
+            var card = new Card(i);
+            _deck.Add(card);
+        }
+        _deck.ForEach(i => Console.WriteLine(i.id));
+        _deck = _deck.OrderBy(a => Guid.NewGuid()).ToList();
+    }
+    
     void Awake() {
         gridManager = gridGameObject.GetComponent<GridManager>();
         _players = new List<Player>();
@@ -47,6 +59,9 @@ public class GameController : MonoBehaviour {
         color.Add(2, GREEN);
         color.Add(3, BLUE);
         ColorUtility.TryParseHtmlString(color[0], out newCol);
+        _deck = new List<Card>(cardsNumber);
+        CreateDeck();
+        
     }
 
     // Start is called before the first frame update
@@ -72,7 +87,7 @@ public class GameController : MonoBehaviour {
             }
 
             stateMachine.currentState.HandleInput();
-            if (activeState != State.STATE_MENU) cam.backgroundColor = newCol;
+            if (activeState != State.STATE_MENU) cam.DOColor(newCol, 0.5f);
             if (activePlayer >= 0) {
                 active_player_Text.text = _players[activePlayer].name;
             }
@@ -134,12 +149,11 @@ public class GameController : MonoBehaviour {
                             var onTile = gridManager._tiles.Find(t =>
                                 (Vector2) t.gameObject.transform.position == movingState.selectedTilePos);
                             if (gridManager._allowedTilePath.Contains(onTile)) {
-                                gridManager.MovePlayer(GameController.getActivePlayer(), onTile.gameObject.transform.position);
-                                stateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
+                                gridManager.MovePlayer(getActivePlayer(), onTile.gameObject.transform.position);
+                                stateMachine.ChangeState(_states[State.STATE_SHIFT]);
                             }
 
                             break;
-                        // todo handle movement around the grid of a player
                         case (int) InputController.INPUT_LEFT:
                             movingState.resetTileColor();
                             if (movingState.selectedTilePos.x == 0) {
@@ -161,7 +175,7 @@ public class GameController : MonoBehaviour {
                                 movingState.selectedTilePos += Vector2.right;
                             }
 
-                            GameController.gridManager._tiles
+                            gridManager._tiles
                                 .Find(t => (Vector2) t.gameObject.transform.position == movingState.selectedTilePos).SetColor(Color.grey);
                             break;
 
@@ -208,30 +222,34 @@ public class GameController : MonoBehaviour {
             Console.WriteLine(e);
             throw;
         }
-
         activePlayer = 0;
         initPlayers();
         ColorUtility.TryParseHtmlString(color[activePlayer], out newCol);
-        Debug.Log("players " + AirConsole.instance.GetActivePlayerDeviceIds.Count);
     }
 
     private void initPlayers() {
-        Debug.Log("active player for this match! ");
-        Debug.Log(AirConsole.instance.GetActivePlayerDeviceIds.Count);
-        for (var index = 0; index < AirConsole.instance.GetActivePlayerDeviceIds.Count; index++) {
+        var playersCount = AirConsole.instance.GetActivePlayerDeviceIds.Count;
+        Debug.Log("cardsPerPlayer" + _deck.Count);
+        Debug.Log("cardsPerPlayer" + _deck.Count / playersCount);
+        var cardsPerPlayer = _deck.Count / playersCount;
+        Debug.Log("Cards per player" + cardsPerPlayer);
+        for (var index = 0; index < playersCount; index++) {
             var c = color[index];
             var playerGOGameObject = initPlayerGameObject(index, c);
             Debug.Log("PLAYERRRRR " + index);
-            Debug.Log(playerGOGameObject.transform.position);
             var player = new Player(playerGOGameObject,
                 AirConsole.instance.GetNickname(AirConsole.instance.ConvertPlayerNumberToDeviceId(index)),
                 index, AirConsole.instance.ConvertPlayerNumberToDeviceId(0), index == 0, c);
+            player.cards = new Stack<Card>(_deck.GetRange(index * cardsPerPlayer, cardsPerPlayer));
+            Debug.Log("PLAYERRRRR " + index);
+            player.cards.ToList().ForEach(i => Debug.Log(i.id));
             _players.Add(player);
             sendMessageToPlayer(updatePlayerMessage(index, index == 0), index);
         }
-
         _players[activePlayer].playerGameObject.transform.localScale = 2 * Vector3.one;
     }
+    
+    
 
     private GameObject initPlayerGameObject(int id, string c) {
         ColorUtility.TryParseHtmlString(c, out newCol);
@@ -245,8 +263,6 @@ public class GameController : MonoBehaviour {
             3 => new Vector3(GridManager.N - 1, GridManager.N - 1, -1),
             _ => go.transform.position
         };
-        Debug.Log("returning Player gameObj");
-        Debug.Log(go.transform.position);
         return go;
     }
 
@@ -284,8 +300,6 @@ public class GameController : MonoBehaviour {
     }
 
     public static void sendMessageToPlayer(object message, int playerNumber) {
-        Debug.Log(playerNumber);
-        Debug.Log(message);
         AirConsole.instance.Message(AirConsole.instance.ConvertPlayerNumberToDeviceId(playerNumber), message);
     }
 }

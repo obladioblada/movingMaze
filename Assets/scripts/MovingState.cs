@@ -44,6 +44,9 @@ public class MovingState : AbstractState {
 
     public override void HandleInput() {
         base.HandleInput();
+        if (GameController.gridManager._allowedTilePath.Count == 1) {
+            StateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
+        }
         if (Input.GetKeyDown(InputController.INPUT_INSERT)) {
             var targetTile = GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == selectedTilePos);
             if (GameController.gridManager._allowedTilePath.Contains(targetTile) &&
