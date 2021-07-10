@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using DG.Tweening;
 using grid;
 using UnityEngine;
@@ -71,7 +72,22 @@ public class MovingState : AbstractState {
                                 GameController.getActivePlayer().playerGameObject.transform.position.z);
                         });
                         GameController.getActivePlayer().playerGameObject.transform.DOPath(vectorPath.ToArray(),
-                            1f, PathType.CatmullRom).SetEase(Ease.Linear);
+                            1f, PathType.CatmullRom).SetEase(Ease.Linear).OnComplete(() => {
+                            if (GameController.getActivePlayer().cards.Count > 0) {
+                                if (targetTile.card == null || GameController.getActivePlayer().cards.Peek().id != targetTile.card.id) {
+                                    StateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
+                                    return;
+                                }
+                                GameController.getActivePlayer().cards.Pop();
+                                GameController.getActivePlayer().playerScoreLabel.text =
+                                    "" + GameController.getActivePlayer().cards.Count;
+                                Debug.Log(GameController.getActivePlayer().ToString());
+                                StateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
+                            }
+                            else if (GameController.getActivePlayer().initialPosition == (Vector2) targetTile.gameObject.transform.position) {
+                                Debug.Log("GAME FINISHED");
+                            }
+                        });
                     }
                 }
                 StateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);

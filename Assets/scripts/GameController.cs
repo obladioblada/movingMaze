@@ -132,11 +132,12 @@ public class GameController : MonoBehaviour {
             var playerGOGameObject = initPlayerGameObject(_players.Count, c);
             Debug.Log("PLAYERRRRR " + _players.Count + 1);
             var player = new Player(playerGOGameObject,
-                AirConsole.instance.GetNickname(AirConsole.instance.ConvertPlayerNumberToDeviceId(_players.Count)),
-                _players.Count, AirConsole.instance.ConvertPlayerNumberToDeviceId(0), _players.Count == 0, c);
+                AirConsole.instance.GetNickname(deviceID),
+                _players.Count, deviceID, _players.Count == 0, c);
             player.playerImage = img;
             player.playerLabel = tempTextBox;
             player.playerScoreLabel = tempScoreBox;
+            player.initialPosition = player.playerGameObject.transform.position;
             _players.Add(player);
         }
     }
@@ -288,6 +289,7 @@ public class GameController : MonoBehaviour {
             Debug.Log("PLAYERRRRR " + index);
             _players[index].cards.ToList().ForEach(i => Debug.Log(i.id));
             _players[index].playerScoreLabel.text = ""+_players[index].cards.Count;
+            Debug.Log(_players[index].ToString());
             sendMessageToPlayer(updatePlayerMessage(index, index == 0), index);
         }
         //_players[activePlayer].playerGameObject.transform.localScale = 2 * Vector3.one;

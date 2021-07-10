@@ -9,4 +9,9 @@ public class Card {
    public Card(int id) {
       this.id = id;
    }
+
+   public Card(int id, GameObject cardGO) {
+      this.id = id;
+      this.cardGO = cardGO;
+   }
 }

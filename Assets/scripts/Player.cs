@@ -15,15 +15,20 @@ public class Player {
    public Text playerLabel;
    public GameObject playerImage;
    public Text playerScoreLabel;
+   public Vector2 initialPosition;
 
    public Stack<Card> cards;
 
    public Player(GameObject player, string name, int number, int deviceId, bool isActive, string color) {
-      this.playerGameObject = player;
+      playerGameObject = player;
       this.name = name;
       this.number = number;
       this.deviceId = deviceId;
       this.isActive = isActive;
       this.color = color;
+   }
+
+   public override string ToString() {
+      return "name: " + name + " number: " + number + " deviceId: " + deviceId + " color: " + color + " isActive: " + isActive + " activeCard: " + cards.Peek().id;
    }
 }

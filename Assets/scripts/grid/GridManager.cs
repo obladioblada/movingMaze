@@ -144,6 +144,8 @@ namespace grid {
             
         }
         private void GenerateGrid() {
+            GameController._deck.Reverse();
+            var cloneDeck = new Stack<Card>(GameController._deck);
             for (var x = 0; x < N; x++) {
                 // creating arrows bottom/top side
                 if (x % 2 == 1) {
@@ -172,9 +174,6 @@ namespace grid {
                                 updateWall(wall, 2);
                                 break;
                         }
-                        Debug.Log("tile at the angle: X-Y" + x + " - " + y);
-                        Debug.Log(go.transform.rotation);
-                        Debug.Log(wall[0] + "" + wall[1] + "" + wall[2] + "" + wall[3]);
                         _tiles.Add(new Tile(x + y * 10, go, GetTilePathWithNumber(3), wall));
                     } else {
                         // create rest of the grid
@@ -186,11 +185,20 @@ namespace grid {
                         var wall = generateWall(tileId);
                         updateWall(wall, rotationRandomId);
                         GameObject t = null;
-                        if (Random.Range(1, 10) < 3) {
+                       
+                        //todo get gameobject sith card image insted of creating this treasure GO
+                        if (cloneDeck.Count > 0) {
+                            var currentCard = cloneDeck.Pop();
                             t = Instantiate(treasure, go.transform.position, go.transform.rotation, go.transform);
                             t.GetComponent<Renderer>().material.color = Random.ColorHSV(0f, 1f, 1f, 1f, 0.5f, 1f);
+                            t.gameObject.name = "" + currentCard.id;
+                            currentCard.cardGO = t;
+                            _tiles.Add(new Tile(x + y * 10, go, tilePath, wall, currentCard));
                         }
-                        _tiles.Add( new Tile(x + y * 10, go, tilePath, wall,t));
+                        else {
+                            _tiles.Add(new Tile(x + y * 10, go, tilePath, wall));
+                        }
+                     
                     }
                     // creating arrows right/left side
                     if (y % 2 == 1 && x == 0) {
@@ -201,7 +209,6 @@ namespace grid {
                     }
                 }
             }
-            
             Destroy(allowMoving);
             Destroy(treasure);
         }
@@ -290,6 +297,7 @@ namespace grid {
             recursiveExplorePlayerGrid(startingTile, startingTile.weight + 1);
         }
         private void recursiveExplorePlayerGrid(Tile startingTile, int weight) {
+            Debug.Log("recursive checking adjacent tiles"); 
             if (startingTile.explored) return;
             startingTile.explored = true;
             startingTile.SetColor(Color.yellow);
