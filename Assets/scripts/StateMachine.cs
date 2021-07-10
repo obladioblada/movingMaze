@@ -8,14 +8,11 @@ public class StateMachine {
     
     public AbstractState currentState;
     public int activePlayer = - 1;
-    private Text _text;
-    
-    public void Initialize(AbstractState startingState, Text text) {
-        _text = text;
+
+    public void Initialize(AbstractState startingState) {
         currentState = startingState;
         Debug.Log(startingState);
         startingState.Enter();
-        _text.text = currentState.Name.ToString();
     }
 
     public void ChangeState(AbstractState newState) {
@@ -24,6 +21,5 @@ public class StateMachine {
         currentState.Exit();
         currentState = newState;
         currentState.Enter();
-        _text.text = currentState.Name.ToString();
     }
 }

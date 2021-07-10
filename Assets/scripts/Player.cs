@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Player {
    
@@ -11,6 +12,9 @@ public class Player {
    private int deviceId;
    private bool isActive;
    private string color;
+   public Text playerLabel;
+   public GameObject playerImage;
+   public Text playerScoreLabel;
 
    public Stack<Card> cards;
 

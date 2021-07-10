@@ -10,7 +10,11 @@ using Tile = grid.Tile;
 
 public class MovingState : AbstractState {
     public Vector2 selectedTilePos;
-    public MovingState(State name, StateMachine stateMachine) : base(name, stateMachine) { }
+    private GameController _gameController;
+
+    public MovingState(State name, StateMachine stateMachine, GameController gameController) : base(name, stateMachine) {
+        _gameController = gameController;
+    }
 
 
     public override void Enter() {
@@ -114,6 +118,6 @@ public class MovingState : AbstractState {
         Debug.Log("calling exit from moving!");
         Debug.Log("current activePlayer " + GameController.activePlayer);
         clearTilePath();
-        GameController.UpdateActivePlayer();
+        _gameController.UpdateActivePlayer();
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -7,6 +8,7 @@ using grid;
 using UnityEngine;
 using NDream.AirConsole;
 using Newtonsoft.Json.Linq;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
@@ -29,13 +31,17 @@ public class GameController : MonoBehaviour {
 
 
     [SerializeField] public Camera cam;
-    [SerializeField] public Text state_Text;
     [SerializeField] public Text active_player_Text;
     [SerializeField] public GameObject playerGO;
+    
+    
+    [SerializeField] public Text playerNameLabel;
+    [SerializeField] public GameObject imagePlayer;
+    [SerializeField] public GameObject canvasGO;
+    [SerializeField] public GameObject currentPlayerSelector;
 
     public GameObject gridGameObject;
     public static GridManager gridManager;
-    private bool onPlayersReady;
 
     public static Player getActivePlayer() {
         return _players[activePlayer];
@@ -61,7 +67,9 @@ public class GameController : MonoBehaviour {
         ColorUtility.TryParseHtmlString(color[0], out newCol);
         _deck = new List<Card>(cardsNumber);
         CreateDeck();
-        
+        Debug.Log("CANVAS pos " + canvasGO.transform.position);
+        imagePlayer.SetActive(false);
+        playerNameLabel.enabled = false;
     }
 
     // Start is called before the first frame update
@@ -70,9 +78,9 @@ public class GameController : MonoBehaviour {
         _states = new Dictionary<State, AbstractState> {
             {State.STATE_MENU, new MenuState(State.STATE_MENU, stateMachine)},
             {State.STATE_SHIFT, new ShiftingState(State.STATE_SHIFT, stateMachine)},
-            {State.STATE_MOVE, new MovingState(State.STATE_MOVE, stateMachine)}
+            {State.STATE_MOVE, new MovingState(State.STATE_MOVE, stateMachine, this)}
         };
-        stateMachine.Initialize(_states[State.STATE_MENU], state_Text);
+        stateMachine.Initialize(_states[State.STATE_MENU]);
         AirConsole.instance.onMessage += OnMessage;
         AirConsole.instance.onConnect += OnConnect;
         AirConsole.instance.onDisconnect += OnDisconnect;
@@ -81,16 +89,11 @@ public class GameController : MonoBehaviour {
     private void Update() {
         if (stateMachine != null && stateMachine.currentState != null) {
             if (stateMachine.currentState.Name == State.STATE_MENU &&
-                Input.GetKeyDown(InputController.INPUT_START) && onPlayersReady) {
+                Input.GetKeyDown(InputController.INPUT_START)) {
                 stateMachine.ChangeState(_states[State.STATE_SHIFT]);
                 StartGame();
             }
-
             stateMachine.currentState.HandleInput();
-            if (activeState != State.STATE_MENU) cam.DOColor(newCol, 0.5f);
-            if (activePlayer >= 0) {
-                active_player_Text.text = _players[activePlayer].name;
-            }
         }
     }
 
@@ -99,10 +102,45 @@ public class GameController : MonoBehaviour {
         Debug.Log("Device " + deviceID + " disconnected");
     }
 
+    private int connectedDevices = 0;
+
     void OnConnect(int deviceID) {
-        Debug.Log("Device " + deviceID + " connected");
-        onPlayersReady = true;
+        if (_players.Count <= 2) {
+            imagePlayer.SetActive(true);
+            playerNameLabel.enabled = true;
+            Debug.Log("Device " + deviceID + " connected");
+            Debug.Log(AirConsole.instance.GetProfilePicture(deviceID));
+            var img = Instantiate(imagePlayer, canvasGO.transform);
+            var tempTextBox = Instantiate(playerNameLabel, canvasGO.transform);
+            var playerName = AirConsole.instance.GetNickname(deviceID);
+            tempTextBox.text = playerName;
+            tempTextBox.transform.DOMove(tempTextBox.transform.position + Vector3.down * connectedDevices, 0.3f);
+            StartCoroutine(DownloadImage(img, AirConsole.instance.GetProfilePicture(deviceID)));
+            img.gameObject.name = playerName + "Img";
+            img.gameObject.transform.DOMove(img.transform.position + Vector3.down * connectedDevices, 0.3f);
+            connectedDevices++;
+            imagePlayer.SetActive(false);
+            playerNameLabel.enabled = false;
+            var c = color[_players.Count];
+            var playerGOGameObject = initPlayerGameObject(_players.Count, c);
+            Debug.Log("PLAYERRRRR " + _players.Count + 1);
+            var player = new Player(playerGOGameObject,
+                AirConsole.instance.GetNickname(AirConsole.instance.ConvertPlayerNumberToDeviceId(_players.Count)),
+                _players.Count, AirConsole.instance.ConvertPlayerNumberToDeviceId(0), _players.Count == 0, c);
+            player.playerImage = img;
+            player.playerLabel = tempTextBox;
+            _players.Add(player);
+        }
     }
+
+
+    IEnumerator DownloadImage(GameObject image, string url) {
+        WWW www = new WWW(url);
+        yield return www;
+        if (www.texture != null)
+            image.GetComponent<Image>().sprite =
+                Sprite.Create(www.texture, new Rect(0, 0, www.texture.width, www.texture.height), new Vector2(0, 0));
+    } 
 
     void OnMessage(int from, JToken data) {
         Debug.Log("message from " + from + " data: " + data);
@@ -225,6 +263,7 @@ public class GameController : MonoBehaviour {
         activePlayer = 0;
         initPlayers();
         ColorUtility.TryParseHtmlString(color[activePlayer], out newCol);
+        currentPlayerSelector.GetComponent<Image>().DOColor(newCol, 0.3f);
     }
 
     private void initPlayers() {
@@ -233,17 +272,13 @@ public class GameController : MonoBehaviour {
         Debug.Log("cardsPerPlayer" + _deck.Count / playersCount);
         var cardsPerPlayer = _deck.Count / playersCount;
         Debug.Log("Cards per player" + cardsPerPlayer);
-        for (var index = 0; index < playersCount; index++) {
+        Debug.Log("PlayerArrayCount, " + _players.Count);
+        Debug.Log("AirConsolePlayerCOunt " + playersCount);
+        for (var index = 0; index < playersCount - 1; index++) {
             var c = color[index];
-            var playerGOGameObject = initPlayerGameObject(index, c);
+            _players[index].cards = new Stack<Card>(_deck.GetRange(index  * cardsPerPlayer, cardsPerPlayer));
             Debug.Log("PLAYERRRRR " + index);
-            var player = new Player(playerGOGameObject,
-                AirConsole.instance.GetNickname(AirConsole.instance.ConvertPlayerNumberToDeviceId(index)),
-                index, AirConsole.instance.ConvertPlayerNumberToDeviceId(0), index == 0, c);
-            player.cards = new Stack<Card>(_deck.GetRange(index * cardsPerPlayer, cardsPerPlayer));
-            Debug.Log("PLAYERRRRR " + index);
-            player.cards.ToList().ForEach(i => Debug.Log(i.id));
-            _players.Add(player);
+            _players[index].cards.ToList().ForEach(i => Debug.Log(i.id));
             sendMessageToPlayer(updatePlayerMessage(index, index == 0), index);
         }
         _players[activePlayer].playerGameObject.transform.localScale = 2 * Vector3.one;
@@ -281,7 +316,7 @@ public class GameController : MonoBehaviour {
         sendMessageToPlayer(updatePlayerMessage(newPlayerNumber, true), newPlayerNumber);
     }
 
-    public static void UpdateActivePlayer() {
+    public void UpdateActivePlayer() {
         Debug.Log(activePlayer);
         _players[activePlayer].playerGameObject.transform.localScale = Vector3.one;
         if (activePlayer == AirConsole.instance.GetActivePlayerDeviceIds.Count - 1) {
@@ -297,6 +332,8 @@ public class GameController : MonoBehaviour {
 
         _players[activePlayer].playerGameObject.transform.localScale = 2 * Vector3.one;
         ColorUtility.TryParseHtmlString(color[activePlayer], out newCol);
+        currentPlayerSelector.transform.DOMove(getActivePlayer().playerImage.transform.position, 0.3f);
+        currentPlayerSelector.GetComponent<Image>().DOColor(newCol, 0.4f);
     }
 
     public static void sendMessageToPlayer(object message, int playerNumber) {
