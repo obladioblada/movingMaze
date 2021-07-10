@@ -79,6 +79,7 @@ public class MovingState : AbstractState {
         }
         
         if (Input.GetKeyDown(InputController.INPUT_LEFT)) {
+            if (!checkIfSelectedTileInPath(Vector2.left)) return;
             resetTileColor();
             if (selectedTilePos.x == 0) selectedTilePos = new Vector2(GridManager.N - 1, selectedTilePos.y);
             else selectedTilePos += Vector2.left;
@@ -86,6 +87,7 @@ public class MovingState : AbstractState {
         }
 
         if (Input.GetKeyDown(InputController.INPUT_RIGHT)) {
+            if (!checkIfSelectedTileInPath(Vector2.right)) return;
             resetTileColor();
             if ((int) selectedTilePos.x == GridManager.N - 1) selectedTilePos = new Vector2(0, selectedTilePos.y);
             else selectedTilePos += Vector2.right;
@@ -93,6 +95,7 @@ public class MovingState : AbstractState {
         }
 
         if (Input.GetKeyDown(InputController.INPUT_UP)) {
+            if (!checkIfSelectedTileInPath(Vector2.up)) return;
             resetTileColor();
             if ((int) selectedTilePos.y == GridManager.N - 1) selectedTilePos = new Vector2(selectedTilePos.x, 0);
             else selectedTilePos += Vector2.up;
@@ -100,6 +103,7 @@ public class MovingState : AbstractState {
         }
 
         if (Input.GetKeyDown(InputController.INPUT_DOWN)) {
+            if (!checkIfSelectedTileInPath(Vector2.down)) return;
             resetTileColor();
             if ((int) selectedTilePos.y == 0) selectedTilePos = new Vector2(selectedTilePos.x, GridManager.N - 1);
             else selectedTilePos += Vector2.down;
@@ -112,6 +116,12 @@ public class MovingState : AbstractState {
             GameController.gridManager._tiles.FirstOrDefault(t => (Vector2) t.gameObject.transform.position == selectedTilePos);
         if (currentTile == null) return;
         currentTile.SetColor(GameController.gridManager._allowedTilePath.Contains(currentTile) ? Color.yellow : Color.white);
+    }
+
+    
+    private bool checkIfSelectedTileInPath(Vector2 dir) {
+        var currentTile = GameController.gridManager._allowedTilePath.FirstOrDefault(t => (Vector2) t.gameObject.transform.position == selectedTilePos + dir);
+        return  currentTile != null;
     }
 
     public override void Exit() {
