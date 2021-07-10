@@ -36,9 +36,11 @@ public class GameController : MonoBehaviour {
     
     
     [SerializeField] public Text playerNameLabel;
+    [SerializeField] public Text playerScoreLabel;
     [SerializeField] public GameObject imagePlayer;
     [SerializeField] public GameObject canvasGO;
     [SerializeField] public GameObject currentPlayerSelector;
+    
 
     public GameObject gridGameObject;
     public static GridManager gridManager;
@@ -70,6 +72,7 @@ public class GameController : MonoBehaviour {
         Debug.Log("CANVAS pos " + canvasGO.transform.position);
         imagePlayer.SetActive(false);
         playerNameLabel.enabled = false;
+        playerScoreLabel.enabled = false;
     }
 
     // Start is called before the first frame update
@@ -108,19 +111,23 @@ public class GameController : MonoBehaviour {
         if (_players.Count <= 2) {
             imagePlayer.SetActive(true);
             playerNameLabel.enabled = true;
+            playerScoreLabel.enabled = true;
             Debug.Log("Device " + deviceID + " connected");
             Debug.Log(AirConsole.instance.GetProfilePicture(deviceID));
             var img = Instantiate(imagePlayer, canvasGO.transform);
             var tempTextBox = Instantiate(playerNameLabel, canvasGO.transform);
+            var tempScoreBox = Instantiate(playerScoreLabel, canvasGO.transform);
             var playerName = AirConsole.instance.GetNickname(deviceID);
             tempTextBox.text = playerName;
             tempTextBox.transform.DOMove(tempTextBox.transform.position + Vector3.down * connectedDevices, 0.3f);
+            tempScoreBox.transform.DOMove(tempScoreBox.transform.position + Vector3.down * connectedDevices, 0.3f);
             StartCoroutine(DownloadImage(img, AirConsole.instance.GetProfilePicture(deviceID)));
             img.gameObject.name = playerName + "Img";
             img.gameObject.transform.DOMove(img.transform.position + Vector3.down * connectedDevices, 0.3f);
             connectedDevices++;
             imagePlayer.SetActive(false);
             playerNameLabel.enabled = false;
+            playerScoreLabel.enabled = false;
             var c = color[_players.Count];
             var playerGOGameObject = initPlayerGameObject(_players.Count, c);
             Debug.Log("PLAYERRRRR " + _players.Count + 1);
@@ -129,6 +136,7 @@ public class GameController : MonoBehaviour {
                 _players.Count, AirConsole.instance.ConvertPlayerNumberToDeviceId(0), _players.Count == 0, c);
             player.playerImage = img;
             player.playerLabel = tempTextBox;
+            player.playerScoreLabel = tempScoreBox;
             _players.Add(player);
         }
     }
@@ -274,14 +282,15 @@ public class GameController : MonoBehaviour {
         Debug.Log("Cards per player" + cardsPerPlayer);
         Debug.Log("PlayerArrayCount, " + _players.Count);
         Debug.Log("AirConsolePlayerCOunt " + playersCount);
-        for (var index = 0; index < playersCount - 1; index++) {
+        for (var index = 0; index < playersCount; index++) {
             var c = color[index];
             _players[index].cards = new Stack<Card>(_deck.GetRange(index  * cardsPerPlayer, cardsPerPlayer));
             Debug.Log("PLAYERRRRR " + index);
             _players[index].cards.ToList().ForEach(i => Debug.Log(i.id));
+            _players[index].playerScoreLabel.text = ""+_players[index].cards.Count;
             sendMessageToPlayer(updatePlayerMessage(index, index == 0), index);
         }
-        _players[activePlayer].playerGameObject.transform.localScale = 2 * Vector3.one;
+        //_players[activePlayer].playerGameObject.transform.localScale = 2 * Vector3.one;
     }
     
     
@@ -330,7 +339,7 @@ public class GameController : MonoBehaviour {
             UpdateActivePlayer(activePlayer);
         }
 
-        _players[activePlayer].playerGameObject.transform.localScale = 2 * Vector3.one;
+        //_players[activePlayer].playerGameObject.transform.localScale = 2 * Vector3.one;
         ColorUtility.TryParseHtmlString(color[activePlayer], out newCol);
         currentPlayerSelector.transform.DOMove(getActivePlayer().playerImage.transform.position, 0.3f);
         currentPlayerSelector.GetComponent<Image>().DOColor(newCol, 0.4f);
