@@ -27,7 +27,7 @@ body{
 
 .target-image, .button{
     background: var(--button-color);
-    border-radius: 30%;
+    max-width: 6em;
 }
 
 .button{

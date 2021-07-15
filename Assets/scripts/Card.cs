@@ -5,7 +5,8 @@ using UnityEngine;
 public class Card {
    public readonly int id;
    public GameObject cardGO;
-
+   public string snippet;
+   
    public Card(int id) {
       this.id = id;
    }

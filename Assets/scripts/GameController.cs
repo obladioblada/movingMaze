@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using DG.Tweening;
 using grid;
@@ -13,34 +14,37 @@ using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 public class GameController : MonoBehaviour {
+    
+    // COLOR
     static Color newCol;
     private const string RED = "#D32F2F";
     private const string YELLOW = "#F4D03F";
     private const string GREEN = "#4CAF50";
     private const string BLUE = "#3498DB";
-
-    // Use Dictionary as a map.
     static readonly Dictionary<int, string> color = new Dictionary<int, string>();
+    
+    // PLAYER
     public static int activePlayer = -1;
-    public static State activeState;
     public static List<Player> _players;
-    public static List<Card> _deck;
-    private const int cardsNumber = 24;
-    public StateMachine stateMachine = new StateMachine();
-    public static Dictionary<State, AbstractState> _states;
-
-
-    [SerializeField] public Camera cam;
-    [SerializeField] public Text active_player_Text;
     [SerializeField] public GameObject playerGO;
     
+    // CARD
+    public static List<Card> _deck;
+    private const int cardsNumber = 24;
+    [SerializeField] public GameObject cardGO;
+    [SerializeField] public Sprite[] cardSprites;
     
+    // STATE
+    public StateMachine stateMachine = new StateMachine();
+    public static State activeState;
+    public static Dictionary<State, AbstractState> _states;
+    
+    // UI
     [SerializeField] public Text playerNameLabel;
     [SerializeField] public Text playerScoreLabel;
     [SerializeField] public GameObject imagePlayer;
     [SerializeField] public GameObject canvasGO;
     [SerializeField] public GameObject currentPlayerSelector;
-    
 
     public GameObject gridGameObject;
     public static GridManager gridManager;
@@ -49,16 +53,25 @@ public class GameController : MonoBehaviour {
         return _players[activePlayer];
     }
 
-    private static void CreateDeck() {
+    private void CreateDeck() {
+        _deck = new List<Card>(cardsNumber);
         for (var i = 1; i <= cardsNumber; i++) {
             var card = new Card(i);
+            card.cardGO = Instantiate(cardGO, transform);
+            Debug.Log("SPRIIIIIIIITE");
+            Debug.Log(cardSprites[i - 1]);
+            card.cardGO.GetComponent<SpriteRenderer>().sprite = cardSprites[i - 1];
+            card.cardGO.name = "card_"+i;
+            card.snippet = "id:" + card.id + ", GoName:" + card.cardGO.name;
             _deck.Add(card);
+            // todo get associateimage
         }
-        _deck.ForEach(i => Console.WriteLine(i.id));
         _deck = _deck.OrderBy(a => Guid.NewGuid()).ToList();
+        //Destroy(cardGO);
     }
     
     void Awake() {
+        CreateDeck();
         gridManager = gridGameObject.GetComponent<GridManager>();
         _players = new List<Player>();
         Debug.Log("Awaking...");
@@ -67,8 +80,6 @@ public class GameController : MonoBehaviour {
         color.Add(2, GREEN);
         color.Add(3, BLUE);
         ColorUtility.TryParseHtmlString(color[0], out newCol);
-        _deck = new List<Card>(cardsNumber);
-        CreateDeck();
         Debug.Log("CANVAS pos " + canvasGO.transform.position);
         imagePlayer.SetActive(false);
         playerNameLabel.enabled = false;
@@ -113,7 +124,7 @@ public class GameController : MonoBehaviour {
             playerNameLabel.enabled = true;
             playerScoreLabel.enabled = true;
             Debug.Log("Device " + deviceID + " connected");
-            Debug.Log(AirConsole.instance.GetProfilePicture(deviceID));
+            Debug.Log(AirConsole.instance.GetProfilePicture(deviceID, 128));
             var img = Instantiate(imagePlayer, canvasGO.transform);
             var tempTextBox = Instantiate(playerNameLabel, canvasGO.transform);
             var tempScoreBox = Instantiate(playerScoreLabel, canvasGO.transform);
@@ -282,49 +293,86 @@ public class GameController : MonoBehaviour {
         var cardsPerPlayer = _deck.Count / playersCount;
         Debug.Log("Cards per player" + cardsPerPlayer);
         Debug.Log("PlayerArrayCount, " + _players.Count);
-        Debug.Log("AirConsolePlayerCOunt " + playersCount);
+        Debug.Log("AirConsolePlayerCount " + playersCount);
         for (var index = 0; index < playersCount; index++) {
             var c = color[index];
             _players[index].cards = new Stack<Card>(_deck.GetRange(index  * cardsPerPlayer, cardsPerPlayer));
             Debug.Log("PLAYERRRRR " + index);
             _players[index].cards.ToList().ForEach(i => Debug.Log(i.id));
-            _players[index].playerScoreLabel.text = ""+_players[index].cards.Count;
+            _players[index].playerScoreLabel.text = "" + _players[index].cards.Count;
             Debug.Log(_players[index].ToString());
             sendMessageToPlayer(updatePlayerMessage(index, index == 0), index);
+            if (_players[index].cards.Peek().cardGO.GetComponent<SpriteRenderer>() != null) {
+                var decompress = DeCompress(_players[index].cards.Peek().cardGO.GetComponent<SpriteRenderer>().sprite.texture);
+                var bytes = decompress.EncodeToPNG();
+                UpdateActivePlayerCard(index,  Convert.ToBase64String(bytes));
+            }
         }
         //_players[activePlayer].playerGameObject.transform.localScale = 2 * Vector3.one;
     }
     
-    
+    public static Texture2D DeCompress(Texture2D source) {
+        RenderTexture renderTex = RenderTexture.GetTemporary(
+            source.width,
+            source.height,
+            0,
+            RenderTextureFormat.Default,
+            RenderTextureReadWrite.Linear);
+
+        Graphics.Blit(source, renderTex);
+        RenderTexture previous = RenderTexture.active;
+        RenderTexture.active = renderTex;
+        
+        Texture2D readableText = new Texture2D(source.width, source.height);
+        readableText.ReadPixels(new Rect(0, 0, renderTex.width, renderTex.height), 0, 0);
+        readableText.Apply();
+        RenderTexture.active = previous;
+        RenderTexture.ReleaseTemporary(renderTex);
+        return readableText;
+    }
 
     private GameObject initPlayerGameObject(int id, string c) {
         ColorUtility.TryParseHtmlString(c, out newCol);
         var go = Instantiate(playerGO, transform);
         go.GetComponent<SpriteRenderer>().color = newCol;
         go.name = "Player_" + id;
+        var z = playerGO.transform.position.z;
         go.transform.position = id switch {
-            0 => new Vector3(0, 0, -1),
-            1 => new Vector3(0, GridManager.N - 1, -1),
-            2 => new Vector3(GridManager.N - 1, 0, -1),
-            3 => new Vector3(GridManager.N - 1, GridManager.N - 1, -1),
+            0 => new Vector3(0, 0, z),
+            1 => new Vector3(0, GridManager.N - 1, z),
+            2 => new Vector3(GridManager.N - 1, 0, z),
+            3 => new Vector3(GridManager.N - 1, GridManager.N - 1, z),
             _ => go.transform.position
         };
         return go;
     }
 
+    public static object updatePlayerCardMessage(string imageBase64, string snippet) {
+        return new {
+            action = "UPDATE_STATE_CARD",
+            card_url = imageBase64,
+            card_snippet = snippet
+        };
+    }
+    
     public static object updatePlayerMessage(int playerNumber, bool isActive) {
         return new {
             action = "UPDATE_STATE",
             color = color[playerNumber],
             active = isActive,
             state = activeState,
-            device_id = AirConsole.instance.ConvertPlayerNumberToDeviceId(playerNumber)
+            device_id = AirConsole.instance.ConvertPlayerNumberToDeviceId(playerNumber),
         };
     }
 
     public static void UpdateActivePlayer(int newPlayerNumber) {
         sendMessageToPlayer(updatePlayerMessage(newPlayerNumber - 1, false), newPlayerNumber - 1);
         sendMessageToPlayer(updatePlayerMessage(newPlayerNumber, true), newPlayerNumber);
+    }
+
+    public static void UpdateActivePlayerCard(int playerNumber, string imageBase64) {
+        var snippet = _players[playerNumber].cards.Peek().snippet;
+        sendMessageToPlayer(updatePlayerCardMessage(imageBase64, snippet), playerNumber);
     }
 
     public void UpdateActivePlayer() {

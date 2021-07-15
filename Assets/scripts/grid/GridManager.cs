@@ -13,13 +13,12 @@ namespace grid {
         public const int N = 7;
         [SerializeField] private GameObject tile;
         [SerializeField] private GameObject allowMoving;
-        [SerializeField] private GameObject treasure;
         public List<Tile> _tiles;
         public List<Tile> _allowedTilePath;
         public Arrow[] _arrows;
         public int _selectedArrowIndex;
         private int _oppositeSelectedArrowIndex;
-        private Tile _spare;
+        public static Tile _spare;
         public bool _isFirstTurn;
 
         // returns the specified tile or a random one otherwise
@@ -120,7 +119,7 @@ namespace grid {
         public void RotateSpareTile() {
             Debug.Log("rotating");
             // always prevent concurrent animations
-            if (DOTween.IsTweening(_spare.gameObject.transform.transform)) return;
+            if (DOTween.IsTweening(_spare.gameObject.transform)) return;
             _spare.gameObject.transform.DORotate(_spare.gameObject.transform.eulerAngles + new Vector3(0, 0, -90), 0.5f);
             updateWall(_spare.wall, 1);
         }
@@ -145,14 +144,15 @@ namespace grid {
         }
         private void GenerateGrid() {
             GameController._deck.Reverse();
+            var z = allowMoving.gameObject.transform.position.z;
             var cloneDeck = new Stack<Card>(GameController._deck);
             for (var x = 0; x < N; x++) {
                 // creating arrows bottom/top side
                 if (x % 2 == 1) {
                     _arrows[N + x - 2] = new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Vertically,
-                        new Vector3(x, -1, 1), Vector3.up, x);
+                        new Vector3(x, -1, z), Vector3.up, x);
                     _arrows[N + x - 1] = new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Vertically,
-                        new Vector3(x, N, 1), Vector3.down, x);
+                        new Vector3(x, N, z), Vector3.down, x);
                 }
                 for (var y = 0; y < N; y++) {
                     // create tiles player base
@@ -184,15 +184,11 @@ namespace grid {
                         go.transform.Rotate(0, 0, rotationRandomId * -90); 
                         var wall = generateWall(tileId);
                         updateWall(wall, rotationRandomId);
-                        GameObject t = null;
-                       
-                        //todo get gameobject sith card image insted of creating this treasure GO
                         if (cloneDeck.Count > 0) {
                             var currentCard = cloneDeck.Pop();
-                            t = Instantiate(treasure, go.transform.position, go.transform.rotation, go.transform);
-                            t.GetComponent<Renderer>().material.color = Random.ColorHSV(0f, 1f, 1f, 1f, 0.5f, 1f);
-                            t.gameObject.name = "" + currentCard.id;
-                            currentCard.cardGO = t;
+                            currentCard.cardGO.transform.parent =  go.transform;
+                            currentCard.cardGO.transform.position =  go.transform.position + new Vector3(0,0,-0.5f);
+                            currentCard.cardGO.transform.localScale =  Vector3.one;
                             _tiles.Add(new Tile(x + y * 10, go, tilePath, wall, currentCard));
                         }
                         else {
@@ -203,14 +199,13 @@ namespace grid {
                     // creating arrows right/left side
                     if (y % 2 == 1 && x == 0) {
                         _arrows[y - 1] = (new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Horizontally,
-                            new Vector3(-1, y, 1), Vector3.right, y));
+                            new Vector3(-1, y, z), Vector3.right, y));
                         _arrows[y] = (new Arrow(Instantiate(allowMoving, transform), ShiftAxis.Horizontally,
-                            new Vector3(N, y, 1), Vector3.left, y));
+                            new Vector3(N, y,z), Vector3.left, y));
                     }
                 }
             }
             Destroy(allowMoving);
-            Destroy(treasure);
         }
         
         private void ShiftTiles(int index, ShiftAxis axis, Vector3 direction) {

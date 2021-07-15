@@ -22,6 +22,8 @@ function App() {
     };
     
     me.airConsole.onConnect = function(deviceId) {
+        console.log(me.airConsole.getProfilePicture(deviceId));
+        setTargetImage(me.airConsole.getProfilePicture(deviceId));
         me.airConsole.message(AirConsole.SCREEN, {
             device_id: deviceId,
             user_name: me.airConsole.getNickname(deviceId)
@@ -53,6 +55,11 @@ function App() {
             setActive(data["active"])
             if (data["color"]) setBackground(data["color"])
         }
+        if (data["action"] === "UPDATE_STATE_CARD") {
+            console.log("onMessage", from, data);
+            setTargetImageBase64(data["card_url"])
+            setSnippet(data["card_snippet"])
+        }
     };
     
     updateController(player);
@@ -70,6 +77,18 @@ const setBackground = (color) => {
 
 const setTargetImage = (url) => {
     document.getElementById("target").src = url;
+}
+
+const setTargetImageBase64 = (base64Img) => {
+    document.getElementById('target')
+        .setAttribute(
+            'src',
+            'data:image/png;base64,' + base64Img
+        );
+}
+
+const setSnippet = (text) => {
+    document.getElementById("snippet").innerHTML = text;
 }
 
 const setActive = (isActive) => {

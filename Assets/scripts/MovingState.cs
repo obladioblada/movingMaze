@@ -74,7 +74,12 @@ public class MovingState : AbstractState {
                         GameController.getActivePlayer().playerGameObject.transform.DOPath(vectorPath.ToArray(),
                             1f, PathType.CatmullRom).SetEase(Ease.Linear).OnComplete(() => {
                             if (GameController.getActivePlayer().cards.Count > 0) {
+                                Debug.Log("TARGET TILE");
+                                Debug.Log(targetTile.card.id);
+                                Debug.Log(targetTile.card.cardGO.name);
+                                Debug.Log(targetTile.card.id +":"+GameController.getActivePlayer().cards.Peek().id);
                                 if (targetTile.card == null || GameController.getActivePlayer().cards.Peek().id != targetTile.card.id) {
+                                    Debug.Log("CHANGING STATE!");
                                     StateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
                                     return;
                                 }
@@ -86,11 +91,11 @@ public class MovingState : AbstractState {
                             }
                             else if (GameController.getActivePlayer().initialPosition == (Vector2) targetTile.gameObject.transform.position) {
                                 Debug.Log("GAME FINISHED");
+                                StateMachine.ChangeState(GameController._states[State.STATE_MENU]);
                             }
                         });
                     }
                 }
-                StateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
             }
         }
         
