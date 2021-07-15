@@ -8,7 +8,7 @@ public class Player {
    
    public GameObject playerGameObject;
    public string name;
-   private int number;
+   public int number;
    private int deviceId;
    private bool isActive;
    private string color;

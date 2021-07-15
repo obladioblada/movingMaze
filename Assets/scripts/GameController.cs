@@ -32,8 +32,7 @@ public class GameController : MonoBehaviour {
     public static List<Card> _deck;
     private const int cardsNumber = 24;
     [SerializeField] public GameObject cardGO;
-    [SerializeField] public Sprite[] cardSprites;
-    
+
     // STATE
     public StateMachine stateMachine = new StateMachine();
     public static State activeState;
@@ -59,15 +58,14 @@ public class GameController : MonoBehaviour {
             var card = new Card(i);
             card.cardGO = Instantiate(cardGO, transform);
             Debug.Log("SPRIIIIIIIITE");
-            Debug.Log(cardSprites[i - 1]);
-            card.cardGO.GetComponent<SpriteRenderer>().sprite = cardSprites[i - 1];
+            card.cardGO.GetComponent<SpriteRenderer>().sprite = Resources.Load<Sprite>("Cards/card_"+ (i - 1));
             card.cardGO.name = "card_"+i;
             card.snippet = "id:" + card.id + ", GoName:" + card.cardGO.name;
             _deck.Add(card);
             // todo get associateimage
         }
         _deck = _deck.OrderBy(a => Guid.NewGuid()).ToList();
-        //Destroy(cardGO);
+        Destroy(cardGO);
     }
     
     void Awake() {
@@ -303,34 +301,12 @@ public class GameController : MonoBehaviour {
             Debug.Log(_players[index].ToString());
             sendMessageToPlayer(updatePlayerMessage(index, index == 0), index);
             if (_players[index].cards.Peek().cardGO.GetComponent<SpriteRenderer>() != null) {
-                var decompress = DeCompress(_players[index].cards.Peek().cardGO.GetComponent<SpriteRenderer>().sprite.texture);
-                var bytes = decompress.EncodeToPNG();
+                var bytes = _players[index].cards.Peek().cardGO.GetComponent<SpriteRenderer>().sprite.texture.EncodeToPNG();
                 UpdateActivePlayerCard(index,  Convert.ToBase64String(bytes));
             }
         }
-        //_players[activePlayer].playerGameObject.transform.localScale = 2 * Vector3.one;
     }
     
-    public static Texture2D DeCompress(Texture2D source) {
-        RenderTexture renderTex = RenderTexture.GetTemporary(
-            source.width,
-            source.height,
-            0,
-            RenderTextureFormat.Default,
-            RenderTextureReadWrite.Linear);
-
-        Graphics.Blit(source, renderTex);
-        RenderTexture previous = RenderTexture.active;
-        RenderTexture.active = renderTex;
-        
-        Texture2D readableText = new Texture2D(source.width, source.height);
-        readableText.ReadPixels(new Rect(0, 0, renderTex.width, renderTex.height), 0, 0);
-        readableText.Apply();
-        RenderTexture.active = previous;
-        RenderTexture.ReleaseTemporary(renderTex);
-        return readableText;
-    }
-
     private GameObject initPlayerGameObject(int id, string c) {
         ColorUtility.TryParseHtmlString(c, out newCol);
         var go = Instantiate(playerGO, transform);

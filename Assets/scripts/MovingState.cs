@@ -87,6 +87,8 @@ public class MovingState : AbstractState {
                                 GameController.getActivePlayer().playerScoreLabel.text =
                                     "" + GameController.getActivePlayer().cards.Count;
                                 Debug.Log(GameController.getActivePlayer().ToString());
+                                var bytes = GameController.getActivePlayer().cards.Peek().cardGO.GetComponent<SpriteRenderer>().sprite.texture.EncodeToPNG();
+                                GameController.UpdateActivePlayerCard(GameController.getActivePlayer().number,  Convert.ToBase64String(bytes));
                                 StateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
                             }
                             else if (GameController.getActivePlayer().initialPosition == (Vector2) targetTile.gameObject.transform.position) {

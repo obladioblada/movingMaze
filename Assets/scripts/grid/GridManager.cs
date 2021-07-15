@@ -188,7 +188,6 @@ namespace grid {
                             var currentCard = cloneDeck.Pop();
                             currentCard.cardGO.transform.parent =  go.transform;
                             currentCard.cardGO.transform.position =  go.transform.position + new Vector3(0,0,-0.5f);
-                            currentCard.cardGO.transform.localScale =  Vector3.one;
                             _tiles.Add(new Tile(x + y * 10, go, tilePath, wall, currentCard));
                         }
                         else {
