@@ -18,16 +18,16 @@ namespace grid {
         public const int shiftOppositeLeftOrDown = -1;
 
         public static readonly Func<Tile, int, bool> LastInRow = (t, index) =>
-            t.gameObject.transform.position == new Vector3(GridManager.N, index);
+            t.gameObject.transform.position == new Vector3(GridManager.N, index, t.gameObject.transform.position.z);
 
         public static readonly Func<Tile, int, bool> FirstInRow = (t, index) =>
-            t.gameObject.transform.position == new Vector3(-1, index);
+            t.gameObject.transform.position == new Vector3(-1, index,  t.gameObject.transform.position.z);
 
         public static readonly Func<Tile, int, bool> LastInColumn = (t, index) =>
-            t.gameObject.transform.position == new Vector3(index, GridManager.N);
+            t.gameObject.transform.position == new Vector3(index, GridManager.N,  t.gameObject.transform.position.z);
 
         public static readonly Func<Tile, int, bool> FirstInColumn = (t, index) =>
-            t.gameObject.transform.position == new Vector3(index, -1);
+            t.gameObject.transform.position == new Vector3(index, -1, t.gameObject.transform.position.z);
 
         public static readonly Func<int, Vector2> BeforeFirstInRow = (index) => new Vector2(0, index);
 

@@ -16,6 +16,7 @@ public class Player {
    public GameObject playerImage;
    public Text playerScoreLabel;
    public Vector2 initialPosition;
+   public List<int> deviceIDs;
 
    public Stack<Card> cards;
 
@@ -26,6 +27,9 @@ public class Player {
       this.deviceId = deviceId;
       this.isActive = isActive;
       this.color = color;
+      this.deviceIDs = new List<int>();
+      this.deviceIDs.Add(deviceId);
+
    }
 
    public override string ToString() {

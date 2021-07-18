@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using DG.Tweening;
 using grid;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 using Tile = grid.Tile;
 
@@ -37,8 +38,9 @@ public class MovingState : AbstractState {
         GameController.gridManager._allowedTilePath.Clear();
     }
 
-    private void getPath(ICollection<Tile> path, Tile tile) {
+    public void getPath(ICollection<Tile> path, Tile tile) {
         path.Add(tile);
+        Debug.Log("path" + tile.gameObject.transform.position);
         if (tile.weight == 0 || tile.connectedTile == null) {
             return;
         }
@@ -68,16 +70,20 @@ public class MovingState : AbstractState {
                     if (path.Count > 0) {
                         var vectorPath = path.OrderBy(tile => tile.weight).Select(tile => {
                             var tilePos = tile.gameObject.transform.position;
-                            return new Vector3(tilePos.x, tilePos.y,
-                                GameController.getActivePlayer().playerGameObject.transform.position.z);
+                            Debug.Log(new Vector3(tilePos.x, tilePos.y, GameController.getActivePlayer().playerGameObject.transform.position.z));
+                            return new Vector3(tilePos.x, tilePos.y, GameController.getActivePlayer().playerGameObject.transform.position.z);
                         });
-                        GameController.getActivePlayer().playerGameObject.transform.DOPath(vectorPath.ToArray(),
+                        var enumerable = vectorPath as Vector3[] ?? vectorPath.ToArray();
+                        Debug.Log("vectorPath.count " + enumerable.Count());
+                        GameController.getActivePlayer().playerGameObject.transform.DOPath(enumerable.ToArray(),
                             1f, PathType.CatmullRom).SetEase(Ease.Linear).OnComplete(() => {
                             if (GameController.getActivePlayer().cards.Count > 0) {
                                 Debug.Log("TARGET TILE");
-                                Debug.Log(targetTile.card.id);
-                                Debug.Log(targetTile.card.cardGO.name);
-                                Debug.Log(targetTile.card.id +":"+GameController.getActivePlayer().cards.Peek().id);
+                                if (targetTile.card != null) {
+                                    Debug.Log(targetTile.card.id);
+                                    Debug.Log(targetTile.card.cardGO.name);
+                                    Debug.Log(targetTile.card.id +":"+GameController.getActivePlayer().cards.Peek().id);
+                                }
                                 if (targetTile.card == null || GameController.getActivePlayer().cards.Peek().id != targetTile.card.id) {
                                     Debug.Log("CHANGING STATE!");
                                     StateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
@@ -89,7 +95,8 @@ public class MovingState : AbstractState {
                                 Debug.Log(GameController.getActivePlayer().ToString());
                                 var bytes = GameController.getActivePlayer().cards.Peek().cardGO.GetComponent<SpriteRenderer>().sprite.texture.EncodeToPNG();
                                 GameController.UpdateActivePlayerCard(GameController.getActivePlayer().number,  Convert.ToBase64String(bytes));
-                                StateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
+                                Debug.Log("GAME FINISHED");
+                                SceneManager.LoadScene(0);
                             }
                             else if (GameController.getActivePlayer().initialPosition == (Vector2) targetTile.gameObject.transform.position) {
                                 Debug.Log("GAME FINISHED");
@@ -97,6 +104,11 @@ public class MovingState : AbstractState {
                             }
                         });
                     }
+                }
+                else {
+                    Debug.Log("CHANGING STATE!");
+                    StateMachine.ChangeState(GameController._states[State.STATE_SHIFT]);
+                    return;
                 }
             }
         }
@@ -142,7 +154,7 @@ public class MovingState : AbstractState {
     }
 
     
-    private bool checkIfSelectedTileInPath(Vector2 dir) {
+    public bool checkIfSelectedTileInPath(Vector2 dir) {
         var currentTile = GameController.gridManager._allowedTilePath.FirstOrDefault(t => (Vector2) t.gameObject.transform.position == selectedTilePos + dir);
         return  currentTile != null;
     }

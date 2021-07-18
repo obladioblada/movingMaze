@@ -66,6 +66,7 @@ namespace grid {
             _oppositeSelectedArrowIndex = 1;
             _arrows[_selectedArrowIndex].SetColor(Color.yellow);
             _isFirstTurn = true;
+            DontDestroyOnLoad(gameObject);
         }
         public void InsertTile() {
             if (_oppositeSelectedArrowIndex == _selectedArrowIndex && !_isFirstTurn) {
@@ -184,10 +185,10 @@ namespace grid {
                         go.transform.Rotate(0, 0, rotationRandomId * -90); 
                         var wall = generateWall(tileId);
                         updateWall(wall, rotationRandomId);
-                        if (cloneDeck.Count > 0) {
+                        if (cloneDeck.Count > 0 && tileId % 2 == 0) {
                             var currentCard = cloneDeck.Pop();
                             currentCard.cardGO.transform.parent =  go.transform;
-                            currentCard.cardGO.transform.position =  go.transform.position + new Vector3(0,0,-0.5f);
+                            currentCard.cardGO.transform.position =  go.transform.position + new Vector3(0,0,currentCard.cardGO.transform.position.z);
                             _tiles.Add(new Tile(x + y * 10, go, tilePath, wall, currentCard));
                         }
                         else {
@@ -203,6 +204,16 @@ namespace grid {
                             new Vector3(N, y,z), Vector3.left, y));
                     }
                 }
+            }
+
+            while (cloneDeck.GetEnumerator().MoveNext()) {
+                int randomTileID = Random.Range(1, (N - 1) * (N - 1));
+                if (_tiles[randomTileID].card != null) continue;
+                var pos = _tiles[randomTileID].gameObject.transform.position;
+                if (pos.y == 0 || (int)pos.y == N-1 || pos.x == 0 || (int)pos.x == N-1) continue;
+                var currentCard = cloneDeck.Pop();
+                currentCard.cardGO.transform.parent =  _tiles[randomTileID].gameObject.transform;
+                currentCard.cardGO.transform.position =  _tiles[randomTileID].gameObject.transform.position + new Vector3(0,0,-0.5f);
             }
             Destroy(allowMoving);
         }
