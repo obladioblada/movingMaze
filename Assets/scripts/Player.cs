@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,9 +13,9 @@ public class Player {
    private int deviceId;
    private bool isActive;
    private string color;
-   public Text playerLabel;
+   public GameObject playerLabel;
    public GameObject playerImage;
-   public Text playerScoreLabel;
+   public GameObject playerScoreLabel;
    public Vector2 initialPosition;
    public List<int> deviceIDs;
 

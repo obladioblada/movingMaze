@@ -9,6 +9,7 @@ using grid;
 using UnityEngine;
 using NDream.AirConsole;
 using Newtonsoft.Json.Linq;
+using TMPro;
 using UnityEditor.Build.Content;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
@@ -40,14 +41,19 @@ public class GameController : MonoBehaviour {
     public static Dictionary<State, AbstractState> _states;
 
     // UI
-    [SerializeField] public Text playerNameLabel;
-    [SerializeField] public Text playerScoreLabel;
+    [SerializeField] public GameObject playerNameLabel;
+    [SerializeField] public GameObject playerScoreLabel;
     [SerializeField] public GameObject imagePlayer;
     [SerializeField] public GameObject canvasGO;
     [SerializeField] public GameObject currentPlayerSelector;
+    
+    //AUDIO
+    private AudioSource _audioSource;
 
     public GameObject gridGameObject;
     public static GridManager gridManager;
+    
+    private int connectedDevices;
 
     public static Player getActivePlayer() {
         return _players[activePlayer];
@@ -72,9 +78,7 @@ public class GameController : MonoBehaviour {
 
     void Awake() {
         CreateDeck();
-        if (SceneManager.GetActiveScene().name.Equals("game")) {
-            gridManager = gridGameObject.GetComponent<GridManager>();
-        }
+        gridManager = gridGameObject.GetComponent<GridManager>();
         _players = new List<Player>();
         Debug.Log("Awaking...");
         color.Add(0, RED);
@@ -84,10 +88,13 @@ public class GameController : MonoBehaviour {
         ColorUtility.TryParseHtmlString(color[0], out newCol);
         Debug.Log("CANVAS pos " + canvasGO.transform.position);
         imagePlayer.SetActive(false);
-        playerNameLabel.enabled = false;
-        playerScoreLabel.enabled = false;
+        playerNameLabel.SetActive(false);
+        playerScoreLabel.SetActive(false);
+        currentPlayerSelector.SetActive(false);
+        SceneManager.activeSceneChanged += ChangedActiveScene;
         DontDestroyOnLoad(gameObject);
         DontDestroyOnLoad(canvasGO);
+        _audioSource = GetComponent<AudioSource>();
     }
 
     // Start is called before the first frame update
@@ -106,15 +113,32 @@ public class GameController : MonoBehaviour {
 
     private void Update() {
         if (stateMachine != null && stateMachine.currentState != null) {
-            if (stateMachine.currentState.Name == State.STATE_MENU &&
-                Input.GetKeyDown(InputController.INPUT_START)) {
-                stateMachine.ChangeState(_states[State.STATE_SHIFT]);
-                StartGame();
-            }
-
             stateMachine.currentState.HandleInput();
         }
     }
+
+    private static Boolean gameStarted;
+    
+    private void ChangedActiveScene(Scene current, Scene next)
+    {
+        Debug.Log("SCENEEEEE current" + current);
+        Debug.Log("SCENEEEEE next" + next.name);
+        if ( next.name == "game" && !gameStarted)
+        {
+           StartGame();
+           stateMachine.ChangeState(_states[State.STATE_SHIFT]);
+           currentPlayerSelector.SetActive(true);
+           gameStarted = true;
+           _audioSource.Play();
+        }
+        else {
+            ResumeGame();
+        }
+    }
+    
+    private void ResumeGame() {
+    }
+
 
 
     void OnDisconnect(int deviceID) {
@@ -129,48 +153,57 @@ public class GameController : MonoBehaviour {
         }
     }
 
-    private int connectedDevices = 0;
-
     void OnConnect(int deviceID) {
         // todo, if previous connected player, send message with color and state of player
         if (_players.Count < 4) {
-            imagePlayer.SetActive(true);
-            playerNameLabel.enabled = true;
-            playerScoreLabel.enabled = true;
-            Debug.Log("Device " + deviceID + " connected");
-            Debug.Log(AirConsole.instance.GetProfilePicture(deviceID, 128));
-            var img = Instantiate(imagePlayer, canvasGO.transform);
-            var tempTextBox = Instantiate(playerNameLabel, canvasGO.transform);
-            var tempScoreBox = Instantiate(playerScoreLabel, canvasGO.transform);
-            var playerName = AirConsole.instance.GetNickname(deviceID);
-            tempTextBox.text = playerName;
-            tempTextBox.transform.DOMove(tempTextBox.transform.position + Vector3.down * connectedDevices, 0.3f);
-            tempScoreBox.transform.DOMove(tempScoreBox.transform.position + Vector3.down * connectedDevices, 0.3f);
-            StartCoroutine(DownloadImage(img, AirConsole.instance.GetProfilePicture(deviceID)));
-            img.gameObject.name = playerName + "Img";
-            img.gameObject.transform.DOMove(img.transform.position + Vector3.down * connectedDevices, 0.3f);
-            connectedDevices++;
-            imagePlayer.SetActive(false);
-            playerNameLabel.enabled = false;
-            playerScoreLabel.enabled = false;
+            var img = initPlayerUI(deviceID, out var tempTextBox, out var tempScoreBox);
             var c = color[_players.Count];
             var playerGOGameObject = initPlayerGameObject(_players.Count, c);
             Debug.Log("PLAYERRRRR " + _players.Count);
             var player = new Player(playerGOGameObject,
                 AirConsole.instance.GetNickname(deviceID),
                 _players.Count, deviceID, _players.Count == 0, c);
+            Debug.Log("SCORE POS OUT");
+            Debug.Log(tempScoreBox.transform.position);
             player.playerImage = img;
             player.playerLabel = tempTextBox;
             player.playerScoreLabel = tempScoreBox;
+            player.playerScoreLabel.SetActive(false);
             player.initialPosition = player.playerGameObject.transform.position;
             _players.Add(player);
         }
         else {
             //todo: send message to screen saying number of max player reached
+            Debug.Log("player with device ID" + deviceID + "can't playe");
         }
     }
 
+    [SerializeField] private float spanPLayerUI = 1;
 
+    private GameObject initPlayerUI(int deviceID, out GameObject tempTextBox, out GameObject tempScoreBox) {
+        Debug.Log("INIT------UI");
+        imagePlayer.SetActive(true);
+        playerNameLabel.SetActive(true);
+        playerScoreLabel.SetActive(true);
+        var img = Instantiate(imagePlayer, canvasGO.transform);
+        tempTextBox = Instantiate(playerNameLabel, canvasGO.transform);
+        tempScoreBox = Instantiate(playerScoreLabel, canvasGO.transform);
+        var playerName = AirConsole.instance.GetNickname(deviceID);
+        tempTextBox.GetComponent<TextMeshProUGUI>().text = playerName;
+        tempTextBox.name = playerName + "Name";
+        tempScoreBox.gameObject.name = playerName + "Score";;
+        tempTextBox.transform.DOMove(playerNameLabel.transform.position + Vector3.down * (connectedDevices * spanPLayerUI), 0.3f);
+        tempScoreBox.transform.DOMove(playerScoreLabel.transform.position + Vector3.down * (connectedDevices * spanPLayerUI), 0.3f);
+        StartCoroutine(DownloadImage(img, AirConsole.instance.GetProfilePicture(deviceID)));
+        img.gameObject.name = playerName + "Img";
+        img.transform.DOMove(imagePlayer.transform.position + Vector3.down * (connectedDevices * spanPLayerUI) , 0.3f);
+        connectedDevices++;
+        imagePlayer.SetActive(false);
+        playerNameLabel.SetActive(false);
+        playerScoreLabel.SetActive(false);
+        return img;
+    }
+    
     IEnumerator DownloadImage(GameObject image, string url) {
         WWW www = new WWW(url);
         yield return www;
@@ -261,8 +294,8 @@ public class GameController : MonoBehaviour {
                                                 }
 
                                                 getActivePlayer().cards.Pop();
-                                                getActivePlayer().playerScoreLabel.text =
-                                                    "" + getActivePlayer().cards.Count;
+                                                getActivePlayer().playerScoreLabel.GetComponent<TextMeshProUGUI>().text = "" + getActivePlayer().cards.Count;
+                                                    
                                                 Debug.Log(getActivePlayer().ToString());
                                                 var bytes = getActivePlayer().cards.Peek().cardGO.GetComponent<SpriteRenderer>().sprite
                                                     .texture.EncodeToPNG();
@@ -339,14 +372,7 @@ public class GameController : MonoBehaviour {
 
     public void StartGame() {
         Debug.Log("Starting game!!");
-        try {
-            AirConsole.instance.SetActivePlayers(4);
-        }
-        catch (Exception e) {
-            Console.WriteLine(e);
-            throw;
-        }
-
+        AirConsole.instance.SetActivePlayers(4);
         activePlayer = 0;
         initPlayers();
         ColorUtility.TryParseHtmlString(color[activePlayer], out newCol);
@@ -366,7 +392,8 @@ public class GameController : MonoBehaviour {
             _players[index].cards = new Stack<Card>(_deck.GetRange(index * cardsPerPlayer, cardsPerPlayer));
             Debug.Log("PLAYERRRRR " + index);
             _players[index].cards.ToList().ForEach(i => Debug.Log(i.id));
-            _players[index].playerScoreLabel.text = "" + _players[index].cards.Count;
+            _players[index].playerScoreLabel.SetActive(true);
+            _players[index].playerScoreLabel.GetComponent<TextMeshProUGUI>().text = ""+_players[index].cards.Count;
             Debug.Log(_players[index].ToString());
             sendMessageToPlayer(updatePlayerMessage(index, index == 0), index);
             if (_players[index].cards.Peek().cardGO.GetComponent<SpriteRenderer>() != null) {

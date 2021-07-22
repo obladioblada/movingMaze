@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using DG.Tweening;
 using grid;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
@@ -90,8 +91,8 @@ public class MovingState : AbstractState {
                                     return;
                                 }
                                 GameController.getActivePlayer().cards.Pop();
-                                GameController.getActivePlayer().playerScoreLabel.text =
-                                    "" + GameController.getActivePlayer().cards.Count;
+                                GameController.getActivePlayer().playerScoreLabel.GetComponent<TextMeshProUGUI>().text = "" + GameController.getActivePlayer().cards.Count;
+                                    
                                 Debug.Log(GameController.getActivePlayer().ToString());
                                 var bytes = GameController.getActivePlayer().cards.Peek().cardGO.GetComponent<SpriteRenderer>().sprite.texture.EncodeToPNG();
                                 GameController.UpdateActivePlayerCard(GameController.getActivePlayer().number,  Convert.ToBase64String(bytes));
