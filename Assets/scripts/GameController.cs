@@ -117,7 +117,7 @@ public class GameController : MonoBehaviour {
         }
     }
 
-    private static Boolean gameStarted;
+    private static bool gameStarted;
     
     private void ChangedActiveScene(Scene current, Scene next)
     {
@@ -153,16 +153,26 @@ public class GameController : MonoBehaviour {
         }
     }
 
+    private bool isAlreadyConnectedPlayer(int deviceID) {
+        return _players.Any(player => player.deviceIDs.Contains(deviceID));
+    }
+
     void OnConnect(int deviceID) {
+        if (gameStarted) {
+            //todo send message saying game has started
+            return;
+        }
         // todo, if previous connected player, send message with color and state of player
         if (_players.Count < 4) {
             var img = initPlayerUI(deviceID, out var tempTextBox, out var tempScoreBox);
             var c = color[_players.Count];
             var playerGOGameObject = initPlayerGameObject(_players.Count, c);
+            Debug.Log("MASTER ID IS: "+AirConsole.instance.GetMasterControllerDeviceId());
+            var masterDeviceId = AirConsole.instance.GetMasterControllerDeviceId();
             Debug.Log("PLAYERRRRR " + _players.Count);
             var player = new Player(playerGOGameObject,
                 AirConsole.instance.GetNickname(deviceID),
-                _players.Count, deviceID, _players.Count == 0, c);
+                _players.Count, deviceID, _players.Count == 0, c, masterDeviceId == deviceID);
             Debug.Log("SCORE POS OUT");
             Debug.Log(tempScoreBox.transform.position);
             player.playerImage = img;
@@ -171,10 +181,17 @@ public class GameController : MonoBehaviour {
             player.playerScoreLabel.SetActive(false);
             player.initialPosition = player.playerGameObject.transform.position;
             _players.Add(player);
+            sendMessageToPlayerDeviceID(new {
+                action = "SET_MASTER_PLAYER",
+                is_master = masterDeviceId == deviceID
+            }, deviceID);
+        } else if (isAlreadyConnectedPlayer(deviceID)) {
+            
         }
         else {
             //todo: send message to screen saying number of max player reached
             Debug.Log("player with device ID" + deviceID + "can't playe");
+            sendMessageToPlayerDeviceID(new{}, deviceID);
         }
     }
 
@@ -214,14 +231,15 @@ public class GameController : MonoBehaviour {
 
     void OnMessage(int from, JToken data) {
         Debug.Log("message from " + from + " data: " + data);
+        Debug.Log(data);
         if (data["action"] != null) {
             var action = (int) data["action"];
             Debug.Log(action);
             switch (stateMachine.currentState.Name) {
                 case State.STATE_MENU:
                     switch (action) {
-                        case (int) InputController.INPUT_INSERT:
-                            stateMachine.ChangeState(_states[State.STATE_SHIFT]);
+                        case (int) InputController.INPUT_START:
+                            SceneManager.LoadScene(1, LoadSceneMode.Single);
                             break;
                     }
 
@@ -469,5 +487,9 @@ public class GameController : MonoBehaviour {
 
     public static void sendMessageToPlayer(object message, int playerNumber) {
         AirConsole.instance.Message(AirConsole.instance.ConvertPlayerNumberToDeviceId(playerNumber), message);
+    }
+    
+    public static void sendMessageToPlayerDeviceID(object message, int deviceId) {
+        AirConsole.instance.Message(deviceId, message);
     }
 }

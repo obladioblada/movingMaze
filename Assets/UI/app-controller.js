@@ -10,7 +10,6 @@ var INPUT_SELECT = 32; // space
 
 const player = {
     color: "#bf4b73",
-    target: 'https://picsum.photos/150/150.jpg',
     active: false
 }
 function App() {
@@ -51,14 +50,20 @@ function App() {
 
     me.airConsole.onMessage = function(from, data) {
         if (data["action"] === "UPDATE_STATE") {
-            console.log("onMessage", from, data);
             setActive(data["active"])
+            if (data["active"]) {
+                me.airConsole.vibrate(100);
+            }
             if (data["color"]) setBackground(data["color"])
         }
         if (data["action"] === "UPDATE_STATE_CARD") {
             console.log("onMessage", from, data);
             setTargetImageBase64(data["card_url"])
             setSnippet(data["card_snippet"])
+        }
+        if (data["action"] === "SET_MASTER_PLAYER") {
+            console.log("is_master:" +data["is_master"])
+            setMaster(data["is_master"]);
         }
     };
     
@@ -70,12 +75,21 @@ App.prototype.sendEvent = function(event) {
     this.airConsole.message(AirConsole.SCREEN, {"action": event});
 };
 
+App.prototype.startgame = function() {
+    console.log(event);
+    this.airConsole.message(AirConsole.SCREEN, {"action": INPUT_START});
+    document.getElementById("btn-play").style.display = "none";
+};
+
 const setBackground = (color) => {
     const root = document.documentElement;
     root.style.setProperty('--user-color', color);
 }
 
 const setTargetImage = (url) => {
+    if( document.getElementById("target")) {
+        document.getElementById("target").disabled = false
+    }
     document.getElementById("target").src = url;
 }
 
@@ -88,6 +102,10 @@ const setTargetImageBase64 = (base64Img) => {
 }
 
 const setSnippet = (text) => {
+    if (document.getElementById("snippet").disabled) {
+        document.getElementById("snippet").disabled = false;
+    }
+    
     document.getElementById("snippet").innerHTML = text;
 }
 
@@ -96,10 +114,22 @@ const setActive = (isActive) => {
     console.log(isActive)
     if(isActive){
         document.getElementById("wrapper").classList.remove('inactive');
+        document.getElementById("btn-play").style.display = "none";
     } else {
         document.getElementById("wrapper").classList.add('inactive');
     }
     console.log(document.getElementById("wrapper").classList);
+}
+
+const setMaster = (isMaster) => {
+    console.log("setting element master = " + isMaster)
+    console.log(isMaster)
+    if(isMaster){
+        console.log("found master!")
+        document.getElementById("btn-play").style.transform = "scale(100%)";
+    } else {
+        document.getElementById("btn-play").style.transform = "scale(0)";
+    }
 }
 
 const toogleButton = (id) =>  {
@@ -122,6 +152,8 @@ const enableById = (id) => {
 
 const updateController = (player) => {
     setBackground(player.color);
-    setTargetImage(player.target);
+    if (player.target) {
+        setTargetImage(player.target);
+    }
     setActive(player.active);
 }

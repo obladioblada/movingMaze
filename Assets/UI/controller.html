@@ -8,7 +8,7 @@
 </head>
 <body onload="window.app = new App()">
 <div id="wrapper" class="wrapper">
-    <div class="directions-wrapper shadow inactive">
+    <div class="directions-wrapper inactive">
         <div id="up" class="button button-up shadow" ontouchstart="window.app.sendEvent(INPUT_UP)">
             <i class="icon" data-feather="chevron-up"></i>
         </div>
@@ -24,10 +24,11 @@
     </div>
 
     <div class="target-wrapper">
-        <image id="target" class="target-image shadow inactive" src="https://picsum.photos/150/150.jpg"></image>
+        <image id="target" class="target-image shadow inactive"></image>
         <h3 id="snippet"></h3>
+        <div id="btn-play" class="button button-play" ontouchstart="window.app.startgame()">PLAY</div>
     </div>
-
+    
     <div class="actions-wrapper">
         <div id="rotate" class="button button-rotate shadow" ontouchstart="window.app.sendEvent(INPUT_ROTATE)">
             <i class="icon" data-feather="rotate-ccw"></i>
