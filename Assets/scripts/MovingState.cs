@@ -26,6 +26,9 @@ public class MovingState : AbstractState {
         var baseTile = GameController.gridManager._tiles.Find(t => (Vector2) t.gameObject.transform.position == (Vector2) playerPosition);
         baseTile.SetColor(Color.gray);
         selectedTilePos = baseTile.gameObject.transform.position;
+        _gameController.rotate_function.SetActive(false);
+        _gameController.select_function.GetComponent<TextMeshProUGUI>().text = UIManager.BUTTON_SELECT_FUNCTION_MOVE;
+           
     }
 
     private void clearTilePath() {
@@ -165,5 +168,6 @@ public class MovingState : AbstractState {
         Debug.Log("current activePlayer " + GameController.activePlayer);
         clearTilePath();
         _gameController.UpdateActivePlayer();
+        _gameController.rotate_function.SetActive(false);
     }
 }

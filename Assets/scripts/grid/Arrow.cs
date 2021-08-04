@@ -7,12 +7,13 @@ namespace grid {
         public readonly GridManager.ShiftAxis axes;
         public Vector3 direction;
         public readonly int index;
+        public AudioSource selectedSound;
 
         public Arrow(GameObject gameObject,
             GridManager.ShiftAxis axes,
             Vector3 pos,
             Vector3 direction,
-            int index) {
+            int index, AudioSource audioRotate) {
             this.gameObject = gameObject;
             this.axes = axes;
             this.gameObject.transform.position = pos;
@@ -20,6 +21,7 @@ namespace grid {
             this.direction = direction;
             this.index = index;
             this.gameObject.name = direction + "," + axes + "," + index + "," + pos;
+            this.selectedSound = audioRotate;
         }
 
         public void SetColor(Color color) {

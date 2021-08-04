@@ -46,6 +46,8 @@ public class GameController : MonoBehaviour {
     [SerializeField] public GameObject imagePlayer;
     [SerializeField] public GameObject canvasGO;
     [SerializeField] public GameObject currentPlayerSelector;
+    [SerializeField] public GameObject select_function;
+    [SerializeField] public GameObject rotate_function;
     
     //AUDIO
     private AudioSource _audioSource;
@@ -102,7 +104,7 @@ public class GameController : MonoBehaviour {
         Debug.Log("Starting...");
         _states = new Dictionary<State, AbstractState> {
             {State.STATE_MENU, new MenuState(State.STATE_MENU, stateMachine)},
-            {State.STATE_SHIFT, new ShiftingState(State.STATE_SHIFT, stateMachine)},
+            {State.STATE_SHIFT, new ShiftingState(State.STATE_SHIFT, stateMachine, this)},
             {State.STATE_MOVE, new MovingState(State.STATE_MOVE, stateMachine, this)}
         };
         stateMachine.Initialize(_states[State.STATE_MENU]);
@@ -209,11 +211,11 @@ public class GameController : MonoBehaviour {
         tempTextBox.GetComponent<TextMeshProUGUI>().text = playerName;
         tempTextBox.name = playerName + "Name";
         tempScoreBox.gameObject.name = playerName + "Score";;
-        tempTextBox.transform.DOMove(playerNameLabel.transform.position + Vector3.down * (connectedDevices * spanPLayerUI), 0.3f);
-        tempScoreBox.transform.DOMove(playerScoreLabel.transform.position + Vector3.down * (connectedDevices * spanPLayerUI), 0.3f);
+        tempTextBox.transform.DOMove(playerNameLabel.transform.position + Vector3.down * (connectedDevices * spanPLayerUI), UIManager.ANIMATION_SPEED);
+        tempScoreBox.transform.DOMove(playerScoreLabel.transform.position + Vector3.down * (connectedDevices * spanPLayerUI), UIManager.ANIMATION_SPEED);
         StartCoroutine(DownloadImage(img, AirConsole.instance.GetProfilePicture(deviceID)));
         img.gameObject.name = playerName + "Img";
-        img.transform.DOMove(imagePlayer.transform.position + Vector3.down * (connectedDevices * spanPLayerUI) , 0.3f);
+        img.transform.DOMove(imagePlayer.transform.position + Vector3.down * (connectedDevices * spanPLayerUI) , UIManager.ANIMATION_SPEED);
         connectedDevices++;
         imagePlayer.SetActive(false);
         playerNameLabel.SetActive(false);
@@ -394,7 +396,7 @@ public class GameController : MonoBehaviour {
         activePlayer = 0;
         initPlayers();
         ColorUtility.TryParseHtmlString(color[activePlayer], out newCol);
-        currentPlayerSelector.GetComponent<Image>().DOColor(newCol, 0.3f);
+        currentPlayerSelector.GetComponent<Image>().DOColor(newCol, UIManager.ANIMATION_SPEED);
     }
 
     private void initPlayers() {
@@ -481,8 +483,8 @@ public class GameController : MonoBehaviour {
 
         //_players[activePlayer].playerGameObject.transform.localScale = 2 * Vector3.one;
         ColorUtility.TryParseHtmlString(color[activePlayer], out newCol);
-        currentPlayerSelector.transform.DOMove(getActivePlayer().playerImage.transform.position, 0.3f);
-        currentPlayerSelector.GetComponent<Image>().DOColor(newCol, 0.4f);
+        currentPlayerSelector.transform.DOMove(getActivePlayer().playerImage.transform.position, UIManager.ANIMATION_SPEED);
+        currentPlayerSelector.GetComponent<Image>().DOColor(newCol, UIManager.ANIMATION_SPEED);
     }
 
     public static void sendMessageToPlayer(object message, int playerNumber) {

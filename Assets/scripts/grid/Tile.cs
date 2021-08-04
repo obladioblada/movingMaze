@@ -27,7 +27,7 @@ namespace grid
         }
 
         public void SetColor(Color color) {
-            gameObject.GetComponent<SpriteRenderer>().DOColor(color, 0.4f) ;
+            gameObject.GetComponent<SpriteRenderer>().DOColor(color, UIManager.ANIMATION_SPEED) ;
         }
 
 
